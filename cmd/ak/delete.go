@@ -20,7 +20,7 @@ func NewDeleteAKCommand() *cobra.Command {
 
 	cmd := command.New("delete", short, long, runDeleteAK, []command.Preparer{command.RequireTPM}, nil)
 
-	cmd.Args = cobra.RangeArgs(0, 1)
+	cmd.Args = cobra.ExactArgs(1)
 
 	flag.Add(cmd,
 		flag.StorageFile(),
