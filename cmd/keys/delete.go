@@ -14,9 +14,9 @@ import (
 
 func NewDeleteKeyCommand() *cobra.Command {
 	const (
-		long = `loooooooong delete description.
+		long = `delete a TPM key.
 `
-		short = "short delete description"
+		short = "delete a TPM key"
 	)
 
 	cmd := command.New("delete", short, long, runDeleteKey, []command.Preparer{command.RequireTPM}, nil)

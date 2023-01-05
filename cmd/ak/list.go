@@ -16,9 +16,9 @@ import (
 
 func NewListAKCommand() *cobra.Command {
 	const (
-		long = `loooooooong list description.
+		long = `list AK details.
 `
-		short = "short list description"
+		short = "list AK details"
 	)
 
 	cmd := command.New("list", short, long, runListAK, []command.Preparer{command.RequireTPM}, nil)

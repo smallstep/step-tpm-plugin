@@ -19,34 +19,6 @@ to quickly create a Cobra application.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
-
-	// TODO(hs): make this more composable, so that multiple operations can be
-	// performed in preparation of (all) commands?
-	// PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-
-	// 	// open connection to TPM and add it to the context for commands to use
-	// 	t, err := tpm.Open()
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
-
-	// 	cmd.SetContext(tpm.NewContext(cmd.Context(), t))
-
-	// 	return nil
-	// },
-
-	// TODO(hs): make this more composable, so that multiple operations can be
-	// performed to clean up after running (all) commands?
-	// PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
-
-	// 	// get the TPM and properly close it after running
-	// 	t := tpm.FromContext(cmd.Context())
-	// 	if t == nil {
-	// 		return nil
-	// 	}
-
-	// 	return t.Close()
-	// },
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

@@ -15,9 +15,9 @@ import (
 
 func NewGetAKCommand() *cobra.Command {
 	const (
-		long = `loooooooong get description.
+		long = `print AK base64 blob data.
 `
-		short = "short get description"
+		short = "print AK base64 blob data"
 	)
 
 	cmd := command.New("get", short, long, runGetAK, []command.Preparer{command.RequireTPM}, nil)

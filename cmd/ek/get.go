@@ -15,9 +15,9 @@ import (
 
 func NewGetEKCommand() *cobra.Command {
 	const (
-		long = `loooooooong get description.
+		long = `print TPM EK details.
 `
-		short = "short get description"
+		short = "print TPM EK details"
 	)
 
 	cmd := command.New("get", short, long, runGetEK, []command.Preparer{command.RequireTPM}, nil)

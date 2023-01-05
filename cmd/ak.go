@@ -9,9 +9,9 @@ import (
 
 func NewAKCommand() *cobra.Command {
 	const (
-		long = `loooooooong ak command description.
+		long = `subcommand for managing AKs.
 `
-		short = "short ak command description"
+		short = "subcommand for managing AKs"
 	)
 
 	cmd := command.New("ak <command>", short, long, nil, nil, nil)

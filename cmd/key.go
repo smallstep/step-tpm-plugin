@@ -9,9 +9,9 @@ import (
 
 func NewKeyCommand() *cobra.Command {
 	const (
-		long = `loooooooong key command description.
+		long = `subcommand for managing TPM keys.
 `
-		short = "short key command description"
+		short = "subcommand for managing TPM keys"
 	)
 
 	cmd := command.New("key <command>", short, long, nil, nil, nil)

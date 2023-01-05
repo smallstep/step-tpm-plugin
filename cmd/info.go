@@ -16,9 +16,9 @@ import (
 
 func NewInfoCommand() *cobra.Command {
 	const (
-		long = `loooooooong info description.
+		long = `retrieve TPM information.
 `
-		short = "short info description"
+		short = "retrieve TPM information"
 	)
 
 	cmd := command.New("info", short, long, runInfo, []command.Preparer{command.RequireTPM}, nil)

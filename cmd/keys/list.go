@@ -17,9 +17,9 @@ import (
 
 func NewListKeysCommand() *cobra.Command {
 	const (
-		long = `loooooooong list description.
+		long = `list TPM key details.
 `
-		short = "short list description"
+		short = "list TPM key details"
 	)
 
 	cmd := command.New("list", short, long, runListKeys, []command.Preparer{command.RequireTPM}, nil)

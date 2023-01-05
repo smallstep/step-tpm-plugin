@@ -16,9 +16,9 @@ import (
 
 func NewCreateKeyCommand() *cobra.Command {
 	const (
-		long = `loooooooong create description.
+		long = `create a TPM key. Specify --ak=akName to attest the key.
 `
-		short = "short create description"
+		short = "create a TPM key"
 	)
 
 	cmd := command.New("create", short, long, runCreateKey, []command.Preparer{command.RequireTPM}, nil)

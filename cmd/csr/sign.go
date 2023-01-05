@@ -19,9 +19,9 @@ import (
 
 func NewSignCSRCommand() *cobra.Command {
 	const (
-		long = `loooooooong sign description.
+		long = `temporary CSR sign command.
 `
-		short = "short sign description"
+		short = "temporary CSR sign command"
 	)
 
 	cmd := command.New("sign", short, long, runSignCSR, []command.Preparer{command.RequireTPM}, nil)

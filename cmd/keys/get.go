@@ -15,9 +15,9 @@ import (
 
 func NewGetKeyCommand() *cobra.Command {
 	const (
-		long = `loooooooong get description.
+		long = `print TPM key base64 blob data.
 `
-		short = "short get description"
+		short = "print TPM key base64 blob data"
 	)
 
 	cmd := command.New("get", short, long, runGetKey, []command.Preparer{command.RequireTPM}, nil)

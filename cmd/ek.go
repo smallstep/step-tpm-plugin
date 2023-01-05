@@ -9,9 +9,9 @@ import (
 
 func NewEKCommand() *cobra.Command {
 	const (
-		long = `loooooooong ek command description.
+		long = `subcommand for EKs.
 `
-		short = "short ek command description"
+		short = "subcommand for EKs"
 	)
 
 	cmd := command.New("ek <command>", short, long, nil, nil, nil) // TODO: actually do something

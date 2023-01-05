@@ -9,9 +9,9 @@ import (
 
 func NewCSRCommand() *cobra.Command {
 	const (
-		long = `loooooooong csr command description.
+		long = `subcommand for CSRs.
 `
-		short = "short csr command description"
+		short = "subcommand for CSRs"
 	)
 
 	cmd := command.New("csr <command>", short, long, nil, nil, nil)

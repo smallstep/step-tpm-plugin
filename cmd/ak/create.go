@@ -15,9 +15,9 @@ import (
 
 func NewCreateAKCommand() *cobra.Command {
 	const (
-		long = `loooooooong create description.
+		long = `create an AK.
 `
-		short = "short create description"
+		short = "create an AK"
 	)
 
 	cmd := command.New("create", short, long, runCreateAK, []command.Preparer{command.RequireTPM}, nil)

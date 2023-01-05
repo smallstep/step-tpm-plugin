@@ -13,9 +13,9 @@ import (
 
 func NewDeleteAKCommand() *cobra.Command {
 	const (
-		long = `loooooooong delete description.
+		long = `delete an AK.
 `
-		short = "short delete description"
+		short = "delete an AK"
 	)
 
 	cmd := command.New("delete", short, long, runDeleteAK, []command.Preparer{command.RequireTPM}, nil)
