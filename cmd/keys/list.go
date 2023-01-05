@@ -2,8 +2,9 @@ package keys
 
 import (
 	"context"
-	"fmt"
+	"os"
 
+	"github.com/jedib0t/go-pretty/table"
 	"github.com/spf13/cobra"
 
 	"github.com/smallstep/step-tpm-plugin/internal/command"
@@ -48,9 +49,13 @@ func runListKeys(ctx context.Context) error {
 		return err
 	}
 
+	t1 := table.NewWriter()
+	t1.SetOutputMirror(os.Stdout)
+	t1.AppendHeader(table.Row{"Name", "Data"})
 	for _, key := range keys {
-		fmt.Println(key.Name, key.Data)
+		t1.AppendRow(table.Row{key.Name, len(key.Data)})
 	}
+	t1.Render()
 
 	return nil
 }

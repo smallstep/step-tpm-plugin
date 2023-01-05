@@ -2,8 +2,9 @@ package ak
 
 import (
 	"context"
-	"fmt"
+	"os"
 
+	"github.com/jedib0t/go-pretty/table"
 	"github.com/spf13/cobra"
 
 	"github.com/smallstep/step-tpm-plugin/internal/command"
@@ -42,9 +43,13 @@ func runListAK(ctx context.Context) error {
 		return err
 	}
 
+	t1 := table.NewWriter()
+	t1.SetOutputMirror(os.Stdout)
+	t1.AppendHeader(table.Row{"Name", "Data"})
 	for _, ak := range aks {
-		fmt.Println(ak.Name, ak.Data)
+		t1.AppendRow(table.Row{ak.Name, len(ak.Data)})
 	}
+	t1.Render()
 
 	// cfg := config.FromContext(ctx)
 	// client := client.FromContext(ctx)

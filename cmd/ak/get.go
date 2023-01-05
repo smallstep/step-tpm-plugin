@@ -2,6 +2,7 @@ package ak
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -42,12 +43,18 @@ func runGetAK(ctx context.Context) error {
 
 	_ = json
 
-	key, err := t.GetAK(ctx, name)
+	ak, err := t.GetAK(ctx, name)
 	if err != nil {
 		return fmt.Errorf("getting AK failed: %w", err)
 	}
 
-	fmt.Println(key)
+	// t1 := table.NewWriter()
+	// t1.SetOutputMirror(os.Stdout)
+	// t1.AppendHeader(table.Row{"Name", "Data"})
+	// t1.AppendRow(table.Row{ak.Name, len(ak.Data)})
+	// t1.Render()
+
+	fmt.Println(base64.StdEncoding.EncodeToString(ak.Data))
 
 	return nil
 }

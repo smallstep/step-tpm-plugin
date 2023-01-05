@@ -2,6 +2,7 @@ package keys
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -47,7 +48,13 @@ func runGetKey(ctx context.Context) error {
 		return fmt.Errorf("getting key failed: %w", err)
 	}
 
-	fmt.Println(key) // TODO: nicer outputs
+	// t1 := table.NewWriter()
+	// t1.SetOutputMirror(os.Stdout)
+	// t1.AppendHeader(table.Row{"Name", "Data"})
+	// t1.AppendRow(table.Row{key.Name, len(key.Data)})
+	// t1.Render()
+
+	fmt.Println(base64.StdEncoding.EncodeToString(key.Data))
 
 	return nil
 }

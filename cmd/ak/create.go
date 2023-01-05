@@ -3,7 +3,9 @@ package ak
 import (
 	"context"
 	"fmt"
+	"os"
 
+	"github.com/jedib0t/go-pretty/table"
 	"github.com/spf13/cobra"
 
 	"github.com/smallstep/step-tpm-plugin/internal/command"
@@ -43,7 +45,11 @@ func runCreateAK(ctx context.Context) error {
 		return fmt.Errorf("creating AK failed: %w", err)
 	}
 
-	fmt.Println(ak)
+	t1 := table.NewWriter()
+	t1.SetOutputMirror(os.Stdout)
+	t1.AppendHeader(table.Row{"Name", "Data"})
+	t1.AppendRow(table.Row{ak.Name, len(ak.Data)})
+	t1.Render()
 
 	return nil
 }
