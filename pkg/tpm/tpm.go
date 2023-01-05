@@ -36,7 +36,11 @@ func WithDeviceName(name string) NewTPMOption {
 
 func WithStore(store storage.TPMStore) NewTPMOption {
 	return func(t *TPM) error {
-		t.store = storage.NewFeedthroughStore(store)
+		if store == nil {
+			store = storage.BlackHole() // prevent nil storage; no persistence
+		}
+
+		t.store = store
 		return nil
 	}
 }
