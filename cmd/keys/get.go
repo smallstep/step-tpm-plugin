@@ -19,7 +19,7 @@ func NewGetKeyCommand() *cobra.Command {
 		short = "short get description"
 	)
 
-	cmd := command.New("get", short, long, runGetKey, []command.Preparer{command.RequireTPMStore, command.RequireTPM}, nil)
+	cmd := command.New("get", short, long, runGetKey, []command.Preparer{command.RequireTPM}, nil)
 
 	cmd.Args = cobra.ExactArgs(1)
 

@@ -20,7 +20,7 @@ func NewListAKCommand() *cobra.Command {
 		short = "short list description"
 	)
 
-	cmd := command.New("list", short, long, runListAK, []command.Preparer{command.RequireTPMStore, command.RequireTPM}, nil)
+	cmd := command.New("list", short, long, runListAK, []command.Preparer{command.RequireTPM}, nil)
 
 	flag.Add(cmd,
 		flag.StorageFile(),

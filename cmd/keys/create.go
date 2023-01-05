@@ -19,7 +19,7 @@ func NewCreateKeyCommand() *cobra.Command {
 		short = "short create description"
 	)
 
-	cmd := command.New("create", short, long, runCreateKey, []command.Preparer{command.RequireTPMStore, command.RequireTPM}, nil)
+	cmd := command.New("create", short, long, runCreateKey, []command.Preparer{command.RequireTPM}, nil)
 
 	cmd.Args = cobra.RangeArgs(0, 1)
 

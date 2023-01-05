@@ -21,7 +21,7 @@ func NewListKeysCommand() *cobra.Command {
 		short = "short list description"
 	)
 
-	cmd := command.New("list", short, long, runListKeys, []command.Preparer{command.RequireTPMStore, command.RequireTPM}, nil)
+	cmd := command.New("list", short, long, runListKeys, []command.Preparer{command.RequireTPM}, nil)
 
 	cmd.Args = cobra.NoArgs
 

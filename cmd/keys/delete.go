@@ -19,7 +19,7 @@ func NewDeleteKeyCommand() *cobra.Command {
 		short = "short delete description"
 	)
 
-	cmd := command.New("delete", short, long, runDeleteKey, []command.Preparer{command.RequireTPMStore, command.RequireTPM}, nil)
+	cmd := command.New("delete", short, long, runDeleteKey, []command.Preparer{command.RequireTPM}, nil)
 
 	cmd.Args = cobra.RangeArgs(0, 1)
 

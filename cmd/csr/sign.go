@@ -24,7 +24,7 @@ func NewSignCSRCommand() *cobra.Command {
 		short = "short sign description"
 	)
 
-	cmd := command.New("sign", short, long, runSignCSR, []command.Preparer{command.RequireTPMStore, command.RequireTPM}, nil)
+	cmd := command.New("sign", short, long, runSignCSR, []command.Preparer{command.RequireTPM}, nil)
 
 	cmd.Args = cobra.RangeArgs(0, 1)
 
