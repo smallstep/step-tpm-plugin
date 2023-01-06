@@ -14,4 +14,7 @@ Incomplete lists of things still to do:
 - Tests
 - Nicer outputs (e.g. JSON)
 - Extract the `tpm` package into `smallstep/crypto`
+- Add `--verbose` for debugging output (incl. interactions with TPM)
+- Handle/transform TPM level errors
+    - Example: `NCryptCreatePersistedKey returned 8009000F: The operation completed successfully.`
 - More functionalities

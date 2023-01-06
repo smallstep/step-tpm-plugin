@@ -45,7 +45,7 @@ func runListAK(ctx context.Context) error {
 
 	t1 := table.NewWriter()
 	t1.SetOutputMirror(os.Stdout)
-	t1.AppendHeader(table.Row{"Name", "Data"})
+	t1.AppendHeader(table.Row{"Name", "Data length"})
 	for _, ak := range aks {
 		t1.AppendRow(table.Row{ak.Name, len(ak.Data)})
 	}

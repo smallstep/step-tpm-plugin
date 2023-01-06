@@ -51,7 +51,7 @@ func runListKeys(ctx context.Context) error {
 
 	t1 := table.NewWriter()
 	t1.SetOutputMirror(os.Stdout)
-	t1.AppendHeader(table.Row{"Name", "Data"})
+	t1.AppendHeader(table.Row{"Name", "Data length"})
 	for _, key := range keys {
 		t1.AppendRow(table.Row{key.Name, len(key.Data)})
 	}

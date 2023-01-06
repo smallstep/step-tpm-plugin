@@ -4,7 +4,6 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
-	"fmt"
 	"math/big"
 
 	"github.com/google/go-attestation/attest"
@@ -30,50 +29,50 @@ var oidAuthorityInfoAccessIssuers = asn1.ObjectIdentifier{1, 3, 6, 1, 5, 5, 7, 4
 
 func CreateSubjectKeyAttestationEvidenceExtension(akCert *x509.Certificate, params attest.CertificationParameters) (pkix.Extension, error) {
 
-	asn1Issuer, err := asn1.Marshal(pkix.Name{CommonName: "Test Issuer"}.ToRDNSequence())
-	if err != nil {
-		return pkix.Extension{}, fmt.Errorf("error marshaling issuer: %w", err)
-	}
+	// asn1Issuer, err := asn1.Marshal(pkix.Name{CommonName: "Test Issuer"}.ToRDNSequence())
+	// if err != nil {
+	// 	return pkix.Extension{}, fmt.Errorf("error marshaling issuer: %w", err)
+	// }
 
-	skaeExtension := asn1SKAE{
-		TCGSpecVersion: asn1TCGSpecVersion{Major: 2, Minor: 0},
-		KeyAttestationEvidence: asn1KeyAttestationEvidence{ // TODO: this requires a choice to be encoded; normal vs encrypted
-			AttestEvidence: asn1AttestationEvidence{
-				TPMCertifyInfo: asn1TPMCertifyInfo{
-					CertifyInfo: asn1.BitString{ // TODO: check if setting the values like this is correct
-						Bytes:     params.CreateAttestation,
-						BitLength: len(params.CreateAttestation) * 8,
-					},
-					Signature: asn1.BitString{
-						Bytes:     params.CreateSignature,
-						BitLength: len(params.CreateSignature) * 8,
-					},
-				},
-				TPMIdentityCredAccessInfo: asn1TPMIdentityCredentialAccessInfo{ // TODO: this should contain information from the AIK/AK cert. See x509.go on how to handle these values.
-					AuthorityInfoAccess: []asn1AuthorityInfoAccessSyntax{
-						{
-							Method:   oidAuthorityInfoAccessOcsp,
-							Location: asn1.RawValue{Tag: asn1.TagOID, Class: asn1.ClassContextSpecific, Bytes: []byte("https://www.example.com/ocsp/cert1")},
-						},
-						{
-							Method:   oidAuthorityInfoAccessIssuers,
-							Location: asn1.RawValue{Tag: asn1.TagOID, Class: asn1.ClassContextSpecific, Bytes: []byte("https://www.example.com/issuing/cert1")},
-						},
-					},
-					IssuerSerial: asn1IssuerSerial{ // TODO: should come from the AK cert
-						Issuer: asn1.RawValue{FullBytes: asn1Issuer},
-						Serial: big.NewInt(1337),
-					},
-				},
-			},
-		},
-	}
-	skaeExtensionBytes, err := asn1.Marshal(skaeExtension)
-	if err != nil {
-		return pkix.Extension{}, fmt.Errorf("creating SKAE extension failed: %w", err)
-	}
+	// skaeExtension := asn1SKAE{
+	// 	TCGSpecVersion: asn1TCGSpecVersion{Major: 2, Minor: 0},
+	// 	KeyAttestationEvidence: asn1KeyAttestationEvidence{ // TODO: this requires a choice to be encoded; normal vs encrypted
+	// 		AttestEvidence: asn1AttestationEvidence{
+	// 			TPMCertifyInfo: asn1TPMCertifyInfo{
+	// 				CertifyInfo: asn1.BitString{ // TODO: check if setting the values like this is correct
+	// 					Bytes:     params.CreateAttestation,
+	// 					BitLength: len(params.CreateAttestation) * 8,
+	// 				},
+	// 				Signature: asn1.BitString{
+	// 					Bytes:     params.CreateSignature,
+	// 					BitLength: len(params.CreateSignature) * 8,
+	// 				},
+	// 			},
+	// 			TPMIdentityCredAccessInfo: asn1TPMIdentityCredentialAccessInfo{ // TODO: this should contain information from the AIK/AK cert. See x509.go on how to handle these values.
+	// 				AuthorityInfoAccess: []asn1AuthorityInfoAccessSyntax{
+	// 					{
+	// 						Method:   oidAuthorityInfoAccessOcsp,
+	// 						Location: asn1.RawValue{Tag: asn1.TagOID, Class: asn1.ClassContextSpecific, Bytes: []byte("https://www.example.com/ocsp/cert1")},
+	// 					},
+	// 					{
+	// 						Method:   oidAuthorityInfoAccessIssuers,
+	// 						Location: asn1.RawValue{Tag: asn1.TagOID, Class: asn1.ClassContextSpecific, Bytes: []byte("https://www.example.com/issuing/cert1")},
+	// 					},
+	// 				},
+	// 				IssuerSerial: asn1IssuerSerial{ // TODO: should come from the AK cert
+	// 					Issuer: asn1.RawValue{FullBytes: asn1Issuer},
+	// 					Serial: big.NewInt(1337),
+	// 				},
+	// 			},
+	// 		},
+	// 	},
+	// }
+	// skaeExtensionBytes, err := asn1.Marshal(skaeExtension)
+	// if err != nil {
+	// 	return pkix.Extension{}, fmt.Errorf("creating SKAE extension failed: %w", err)
+	// }
 
-	skaeExtensionBytes = []byte{}
+	skaeExtensionBytes := []byte{}
 
 	return pkix.Extension{
 		Id:       oidSubjectKeyAttestationEvidence,

@@ -49,7 +49,11 @@ func runGetEK(ctx context.Context) error {
 	t1.SetOutputMirror(os.Stdout)
 	t1.AppendHeader(table.Row{"Public Key", "Certificate", "CertificateURL"})
 	for _, ek := range eks {
-		t1.AppendRow(table.Row{fmt.Sprintf("%T", ek.Public), ek.Certificate, ek.CertificateURL})
+		cert := "-"
+		if ek.Certificate != nil {
+			cert = "OK"
+		}
+		t1.AppendRow(table.Row{fmt.Sprintf("%T", ek.Public), cert, ek.CertificateURL})
 	}
 	t1.Render()
 

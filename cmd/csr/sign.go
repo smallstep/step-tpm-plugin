@@ -26,7 +26,13 @@ func NewSignCSRCommand() *cobra.Command {
 
 	cmd := command.New("sign", short, long, runSignCSR, []command.Preparer{command.RequireTPM}, nil)
 
-	cmd.Args = cobra.RangeArgs(0, 1)
+	cmd.Args = cobra.ExactArgs(1)
+
+	flag.Add(cmd,
+		flag.JSON(),
+		flag.Device(),
+		flag.StorageFile(),
+	)
 
 	return cmd
 }
