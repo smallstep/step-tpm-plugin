@@ -38,6 +38,7 @@ func init() {
 		NewEKCommand(),
 		NewAKCommand(),
 		NewKeyCommand(),
+		NewRandomCommand(),
 		NewCSRCommand(),
 	)
 

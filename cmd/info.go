@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/jedib0t/go-pretty/table"
@@ -43,7 +42,7 @@ func runInfo(ctx context.Context) error {
 
 	info, err := t.Info(ctx)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("failed getting TPM info: %w", err)
 	}
 
 	// TODO(hs): what if there are multiple TPMs?
