@@ -15,6 +15,7 @@ func fallbackTPMStore(ctx context.Context) (context.Context, error) {
 	return ctx, nil
 }
 
+// ensureCloseWithPersist ensures the TPM state is persisted to its storage
 func ensureCloseWithPersist(ctx context.Context) (context.Context, error) {
 	t := tpm.FromContext(ctx)
 	if err := t.Open(ctx); err != nil { // needs to be opened first to lock the mutex

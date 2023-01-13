@@ -25,9 +25,8 @@ func NewInfoCommand() *cobra.Command {
 	cmd.Args = cobra.NoArgs
 
 	flag.Add(cmd,
-		flag.Device(), // TOOD(hs): currently unused here. Should affect (lazy) instantiation of the TPM.
+		flag.Device(),
 		flag.JSON(),
-		flag.StorageFile(),
 	)
 
 	return cmd

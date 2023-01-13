@@ -74,6 +74,28 @@ func (s String) addTo(cmd *cobra.Command) {
 	f.Hidden = s.Hidden
 }
 
+// Int wraps the set of int flags.
+type Int struct {
+	Name        string
+	Shorthand   string
+	Description string
+	Default     int
+	Hidden      bool
+}
+
+func (i Int) addTo(cmd *cobra.Command) {
+	flags := cmd.Flags()
+
+	if i.Shorthand != "" {
+		_ = flags.IntP(i.Name, i.Shorthand, i.Default, i.Description)
+	} else {
+		_ = flags.Int(i.Name, i.Default, i.Description)
+	}
+
+	f := flags.Lookup(i.Name)
+	f.Hidden = i.Hidden
+}
+
 // JSON returns a "json" bool flag.
 func JSON() Bool {
 	return Bool{

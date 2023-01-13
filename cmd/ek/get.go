@@ -25,7 +25,6 @@ func NewGetEKCommand() *cobra.Command {
 	flag.Add(cmd,
 		flag.JSON(),
 		flag.Device(),
-		flag.StorageFile(),
 	)
 
 	return cmd
