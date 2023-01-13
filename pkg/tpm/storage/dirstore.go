@@ -89,7 +89,7 @@ func (s *Dirstore) GetKey(name string) (*Key, error) {
 }
 
 func (s *Dirstore) AddKey(key *Key) error {
-	data, err := json.Marshal(serializedKey{Name: key.Name, Data: key.Data})
+	data, err := json.Marshal(serializedKey{Name: key.Name, Type: typeKey, Data: key.Data})
 	if err != nil {
 		return fmt.Errorf("error serializing key: %w", err)
 	}
@@ -153,7 +153,7 @@ func (s *Dirstore) GetAK(name string) (*AK, error) {
 }
 
 func (s *Dirstore) AddAK(ak *AK) error {
-	data, err := json.Marshal(serializedAK{Name: ak.Name, Data: ak.Data})
+	data, err := json.Marshal(serializedAK{Name: ak.Name, Type: typeAK, Data: ak.Data})
 	if err != nil {
 		return fmt.Errorf("error serializing AK: %w", err)
 	}

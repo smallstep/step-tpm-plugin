@@ -2,27 +2,11 @@ package storage
 
 import (
 	"encoding/json"
-	"fmt"
 	"regexp"
 	"strings"
 
 	"github.com/schollz/jsonstore"
 )
-
-const (
-	akPrefix  = "ak-"
-	keyPrefix = "key-"
-)
-
-type serializedAK struct {
-	Name string
-	Data []byte
-}
-
-type serializedKey struct {
-	Name string
-	Data []byte
-}
 
 // Filestore is a concrete implementation of the TPMStore interface that
 // keeps an in-memory map of AKs and TPM Keys. The current state of the
@@ -43,20 +27,12 @@ func NewFilestore(filepath string) *Filestore {
 	}
 }
 
-func keyForKey(name string) string {
-	return fmt.Sprintf("%s%s", keyPrefix, name)
-}
-
-func keyForAK(name string) string {
-	return fmt.Sprintf("%s%s", akPrefix, name)
-}
-
 func (s *Filestore) AddKey(k *Key) error {
-	return s.store.Set(keyForKey(k.Name), serializedKey{Name: k.Name, Data: k.Data})
+	return s.store.Set(keyForKey(k.Name), serializedKey{Name: k.Name, Type: typeKey, Data: k.Data})
 }
 
 func (s *Filestore) AddAK(ak *AK) error {
-	return s.store.Set(keyForAK(ak.Name), serializedAK{Name: ak.Name, Data: ak.Data})
+	return s.store.Set(keyForAK(ak.Name), serializedAK{Name: ak.Name, Type: typeAK, Data: ak.Data})
 }
 
 func (s *Filestore) GetKey(name string) (*Key, error) {
