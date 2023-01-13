@@ -2,6 +2,7 @@ package storage
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -71,7 +72,7 @@ func (s *Dirstore) ListKeyNames() []string {
 func (s *Dirstore) GetKey(name string) (*Key, error) {
 	key := keyForKey(name)
 	if !s.store.Has(key) {
-		return nil, nil
+		return nil, nil // TODO: likely needs an ErrNotFound-like error here
 	}
 
 	data, err := s.store.Read(key)
@@ -79,12 +80,21 @@ func (s *Dirstore) GetKey(name string) (*Key, error) {
 		return nil, fmt.Errorf("error reading from store: %w", err)
 	}
 
-	return &Key{Name: name, Data: data}, nil
+	sk := &serializedKey{}
+	if err := json.Unmarshal(data, sk); err != nil {
+		return nil, fmt.Errorf("error unmarshaling key: %w", err)
+	}
+
+	return &Key{Name: sk.Name, Data: sk.Data}, nil
 }
 
 func (s *Dirstore) AddKey(key *Key) error {
-	k := keyForKey(key.Name)
-	if err := s.store.WriteStream(k, bytes.NewBuffer(key.Data), true); err != nil {
+	data, err := json.Marshal(serializedKey{Name: key.Name, Data: key.Data})
+	if err != nil {
+		return fmt.Errorf("error serializing key: %w", err)
+	}
+
+	if err := s.store.WriteStream(keyForKey(key.Name), bytes.NewBuffer(data), true); err != nil {
 		return fmt.Errorf("error writing to disk: %w", err)
 	}
 	return nil
@@ -126,7 +136,7 @@ func (s *Dirstore) ListAKNames() []string {
 func (s *Dirstore) GetAK(name string) (*AK, error) {
 	key := keyForAK(name)
 	if !s.store.Has(key) {
-		return nil, nil
+		return nil, nil // TODO: should return some ErrNotFound-like error
 	}
 
 	data, err := s.store.Read(key)
@@ -134,12 +144,20 @@ func (s *Dirstore) GetAK(name string) (*AK, error) {
 		return nil, fmt.Errorf("error reading from store: %w", err)
 	}
 
-	return &AK{Name: name, Data: data}, nil
+	sak := &serializedAK{}
+	if err := json.Unmarshal(data, sak); err != nil {
+		return nil, fmt.Errorf("error unmarshaling key: %w", err)
+	}
+
+	return &AK{Name: sak.Name, Data: sak.Data}, nil
 }
 
 func (s *Dirstore) AddAK(ak *AK) error {
-	k := keyForAK(ak.Name)
-	if err := s.store.WriteStream(k, bytes.NewBuffer(ak.Data), true); err != nil {
+	data, err := json.Marshal(serializedAK{Name: ak.Name, Data: ak.Data})
+	if err != nil {
+		return fmt.Errorf("error serializing AK: %w", err)
+	}
+	if err := s.store.WriteStream(keyForAK(ak.Name), bytes.NewBuffer(data), true); err != nil {
 		return fmt.Errorf("error writing to disk: %w", err)
 	}
 	return nil

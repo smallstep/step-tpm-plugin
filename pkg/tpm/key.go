@@ -214,6 +214,7 @@ func (t *TPM) DeleteKey(ctx context.Context, name string) error {
 		return fmt.Errorf("failed loading key: %w", err)
 	}
 
+	// TODO: catch case when named key isn't found; tpm.GetKey returns nil in that case
 	if err := at.DeleteKey(key.Data); err != nil {
 		return fmt.Errorf("failed deleting key: %w", err)
 	}
