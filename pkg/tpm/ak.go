@@ -4,14 +4,16 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"time"
 
 	"github.com/google/go-attestation/attest"
 	"github.com/smallstep/step-tpm-plugin/pkg/tpm/storage"
 )
 
 type AK struct {
-	Name string
-	Data []byte
+	Name      string
+	Data      []byte
+	CreatedAt time.Time
 }
 
 func (t *TPM) CreateAK(ctx context.Context, name string) (AK, error) { // TODO: return information about AK too?
@@ -27,6 +29,8 @@ func (t *TPM) CreateAK(ctx context.Context, name string) (AK, error) { // TODO: 
 		return result, fmt.Errorf("failed opening TPM: %w", err)
 	}
 	defer at.Close()
+
+	now := time.Now()
 
 	if name == "" {
 		// TODO: decouple the TPM key name from the name recorded in the storage? This might
@@ -57,8 +61,9 @@ func (t *TPM) CreateAK(ctx context.Context, name string) (AK, error) { // TODO: 
 	}
 
 	storedAK := &storage.AK{
-		Name: name,
-		Data: data,
+		Name:      name,
+		Data:      data,
+		CreatedAt: now,
 	}
 
 	if err := t.store.AddAK(storedAK); err != nil {
@@ -69,7 +74,7 @@ func (t *TPM) CreateAK(ctx context.Context, name string) (AK, error) { // TODO: 
 		return result, err
 	}
 
-	return AK{Name: storedAK.Name, Data: storedAK.Data}, nil
+	return AK{Name: storedAK.Name, Data: storedAK.Data, CreatedAt: now}, nil
 }
 
 func (t *TPM) GetAK(ctx context.Context, name string) (AK, error) {
@@ -85,7 +90,7 @@ func (t *TPM) GetAK(ctx context.Context, name string) (AK, error) {
 		return result, fmt.Errorf("error getting AK %q: %w", name, err)
 	}
 
-	return AK{Name: ak.Name, Data: ak.Data}, nil
+	return AK{Name: ak.Name, Data: ak.Data, CreatedAt: ak.CreatedAt}, nil
 }
 
 func (t *TPM) ListAKs(ctx context.Context) ([]AK, error) {
@@ -102,7 +107,7 @@ func (t *TPM) ListAKs(ctx context.Context) ([]AK, error) {
 
 	result := make([]AK, 0, len(aks))
 	for _, ak := range aks {
-		result = append(result, AK{Name: ak.Name, Data: ak.Data})
+		result = append(result, AK{Name: ak.Name, Data: ak.Data, CreatedAt: ak.CreatedAt})
 	}
 
 	return result, nil

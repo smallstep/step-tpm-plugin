@@ -28,11 +28,11 @@ func NewFilestore(filepath string) *Filestore {
 }
 
 func (s *Filestore) AddKey(k *Key) error {
-	return s.store.Set(keyForKey(k.Name), serializedKey{Name: k.Name, Type: typeKey, Data: k.Data})
+	return s.store.Set(keyForKey(k.Name), serializedKey{Name: k.Name, Type: typeKey, Data: k.Data, AttestedBy: k.AttestedBy, CreatedAt: k.CreatedAt})
 }
 
 func (s *Filestore) AddAK(ak *AK) error {
-	return s.store.Set(keyForAK(ak.Name), serializedAK{Name: ak.Name, Type: typeAK, Data: ak.Data})
+	return s.store.Set(keyForAK(ak.Name), serializedAK{Name: ak.Name, Type: typeAK, Data: ak.Data, CreatedAt: ak.CreatedAt})
 }
 
 func (s *Filestore) GetKey(name string) (*Key, error) {
@@ -41,7 +41,7 @@ func (s *Filestore) GetKey(name string) (*Key, error) {
 		return nil, err
 	}
 
-	return &Key{Name: sk.Name, Data: sk.Data}, nil
+	return &Key{Name: sk.Name, Data: sk.Data, AttestedBy: sk.AttestedBy, CreatedAt: sk.CreatedAt}, nil
 }
 
 func (s *Filestore) GetAK(name string) (*AK, error) {
@@ -50,7 +50,7 @@ func (s *Filestore) GetAK(name string) (*AK, error) {
 		return nil, err
 	}
 
-	return &AK{Name: ak.Name, Data: ak.Data}, nil
+	return &AK{Name: ak.Name, Data: ak.Data, CreatedAt: ak.CreatedAt}, nil
 }
 
 func (s *Filestore) DeleteKey(name string) error {
@@ -72,7 +72,7 @@ func (s *Filestore) ListKeys() ([]*Key, error) {
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, &Key{Name: sk.Name, Data: sk.Data})
+		result = append(result, &Key{Name: sk.Name, Data: sk.Data, AttestedBy: sk.AttestedBy, CreatedAt: sk.CreatedAt})
 	}
 
 	return result, nil
@@ -87,7 +87,7 @@ func (s *Filestore) ListAKs() ([]*AK, error) {
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, &AK{Name: ak.Name, Data: ak.Data})
+		result = append(result, &AK{Name: ak.Name, Data: ak.Data, CreatedAt: ak.CreatedAt})
 	}
 
 	return result, nil

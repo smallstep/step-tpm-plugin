@@ -55,7 +55,13 @@ func (s *Dirstore) ListKeys() ([]*Key, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error reading from store: %w", err)
 		}
-		result = append(result, &Key{Name: strings.TrimPrefix(k, keyPrefix), Data: data})
+
+		sk := &serializedKey{}
+		if err := json.Unmarshal(data, sk); err != nil {
+			return nil, fmt.Errorf("error unmarshaling key: %w", err)
+		}
+
+		result = append(result, &Key{Name: sk.Name, Data: sk.Data, AttestedBy: sk.AttestedBy, CreatedAt: sk.CreatedAt})
 	}
 	return result, nil
 }
@@ -85,11 +91,11 @@ func (s *Dirstore) GetKey(name string) (*Key, error) {
 		return nil, fmt.Errorf("error unmarshaling key: %w", err)
 	}
 
-	return &Key{Name: sk.Name, Data: sk.Data}, nil
+	return &Key{Name: sk.Name, Data: sk.Data, AttestedBy: sk.AttestedBy, CreatedAt: sk.CreatedAt}, nil
 }
 
 func (s *Dirstore) AddKey(key *Key) error {
-	data, err := json.Marshal(serializedKey{Name: key.Name, Type: typeKey, Data: key.Data})
+	data, err := json.Marshal(serializedKey{Name: key.Name, Type: typeKey, Data: key.Data, AttestedBy: key.AttestedBy, CreatedAt: key.CreatedAt})
 	if err != nil {
 		return fmt.Errorf("error serializing key: %w", err)
 	}
@@ -119,7 +125,13 @@ func (s *Dirstore) ListAKs() ([]*AK, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error reading from store: %w", err)
 		}
-		result = append(result, &AK{Name: strings.TrimPrefix(k, akPrefix), Data: data})
+
+		sak := &serializedAK{}
+		if err := json.Unmarshal(data, sak); err != nil {
+			return nil, fmt.Errorf("error unmarshaling AK: %w", err)
+		}
+
+		result = append(result, &AK{Name: sak.Name, Data: sak.Data, CreatedAt: sak.CreatedAt})
 	}
 	return result, nil
 }
@@ -149,11 +161,11 @@ func (s *Dirstore) GetAK(name string) (*AK, error) {
 		return nil, fmt.Errorf("error unmarshaling key: %w", err)
 	}
 
-	return &AK{Name: sak.Name, Data: sak.Data}, nil
+	return &AK{Name: sak.Name, Data: sak.Data, CreatedAt: sak.CreatedAt}, nil
 }
 
 func (s *Dirstore) AddAK(ak *AK) error {
-	data, err := json.Marshal(serializedAK{Name: ak.Name, Type: typeAK, Data: ak.Data})
+	data, err := json.Marshal(serializedAK{Name: ak.Name, Type: typeAK, Data: ak.Data, CreatedAt: ak.CreatedAt})
 	if err != nil {
 		return fmt.Errorf("error serializing AK: %w", err)
 	}

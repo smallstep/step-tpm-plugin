@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/google/go-attestation/attest"
 	"github.com/smallstep/step-tpm-plugin/pkg/tpm/internal/key"
@@ -14,9 +15,10 @@ import (
 )
 
 type Key struct {
-	Name string
-	Data []byte
-	// TODO: add properties to identify the AK that attested this key (if it was attested)? Created?
+	Name       string
+	Data       []byte
+	AttestedBy string
+	CreatedAt  time.Time
 }
 
 func (t *TPM) CreateKey(ctx context.Context, name string) (Key, error) {
@@ -26,6 +28,8 @@ func (t *TPM) CreateKey(ctx context.Context, name string) (Key, error) {
 		return result, fmt.Errorf("failed opening TPM: %w", err)
 	}
 	defer t.Close(ctx, false)
+
+	now := time.Now()
 
 	if name == "" {
 		nameHex := make([]byte, 5)
@@ -43,8 +47,9 @@ func (t *TPM) CreateKey(ctx context.Context, name string) (Key, error) {
 	}
 
 	storedKey := &storage.Key{
-		Name: name,
-		Data: data,
+		Name:      name,
+		Data:      data,
+		CreatedAt: now,
 	}
 
 	if err := t.store.AddKey(storedKey); err != nil {
@@ -55,7 +60,7 @@ func (t *TPM) CreateKey(ctx context.Context, name string) (Key, error) {
 		return result, fmt.Errorf("error persisting to storage: %w", err)
 	}
 
-	return Key{Name: storedKey.Name, Data: storedKey.Data}, nil
+	return Key{Name: storedKey.Name, Data: storedKey.Data, CreatedAt: now}, nil
 }
 
 // TODO: every interaction with the actual TPM now opens the "connection" when required, then
@@ -77,6 +82,8 @@ func (t *TPM) AttestKey(ctx context.Context, akName, name string) (Key, error) {
 		return result, fmt.Errorf("failed opening TPM: %w", err)
 	}
 	defer at.Close()
+
+	now := time.Now()
 
 	ak, err := t.store.GetAK(akName)
 	if err != nil {
@@ -119,8 +126,10 @@ func (t *TPM) AttestKey(ctx context.Context, akName, name string) (Key, error) {
 	}
 
 	storedKey := &storage.Key{
-		Name: name,
-		Data: data,
+		Name:       name,
+		Data:       data,
+		AttestedBy: akName,
+		CreatedAt:  now,
 	}
 
 	if err := t.store.AddKey(storedKey); err != nil {
@@ -131,7 +140,7 @@ func (t *TPM) AttestKey(ctx context.Context, akName, name string) (Key, error) {
 		return result, fmt.Errorf("error persisting to storage: %w", err)
 	}
 
-	return Key{Name: storedKey.Name, Data: storedKey.Data}, nil
+	return Key{Name: storedKey.Name, Data: storedKey.Data, AttestedBy: akName, CreatedAt: now}, nil
 }
 
 func (t *TPM) GetKey(ctx context.Context, name string) (Key, error) {
@@ -147,7 +156,7 @@ func (t *TPM) GetKey(ctx context.Context, name string) (Key, error) {
 		return result, fmt.Errorf("error getting Key %q: %w", name, err)
 	}
 
-	return Key{Name: key.Name, Data: key.Data}, nil
+	return Key{Name: key.Name, Data: key.Data, AttestedBy: key.AttestedBy, CreatedAt: key.CreatedAt}, nil
 }
 
 func (t *TPM) ListKeys(ctx context.Context) ([]Key, error) {
@@ -164,7 +173,7 @@ func (t *TPM) ListKeys(ctx context.Context) ([]Key, error) {
 
 	result := make([]Key, 0, len(keys))
 	for _, key := range keys {
-		result = append(result, Key{Name: key.Name, Data: key.Data})
+		result = append(result, Key{Name: key.Name, Data: key.Data, AttestedBy: key.AttestedBy, CreatedAt: key.CreatedAt})
 	}
 
 	return result, nil
@@ -214,7 +223,9 @@ func (t *TPM) DeleteKey(ctx context.Context, name string) error {
 		return fmt.Errorf("failed loading key: %w", err)
 	}
 
-	// TODO: catch case when named key isn't found; tpm.GetKey returns nil in that case
+	// TODO: catch case when named key isn't found; tpm.GetKey returns nil in that case,
+	// resulting in a nil pointer. Need an ErrNotFound like type from the storage layer and appropriate
+	// handling?
 	if err := at.DeleteKey(key.Data); err != nil {
 		return fmt.Errorf("failed deleting key: %w", err)
 	}
@@ -304,7 +315,7 @@ func (t *TPM) GetSigner(ctx context.Context, name string) (crypto.Signer, error)
 
 	return &signer{
 		tpm:    t,
-		key:    Key{Name: name, Data: key.Data},
+		key:    Key{Name: name, Data: key.Data, AttestedBy: key.AttestedBy, CreatedAt: key.CreatedAt},
 		public: loadedKey.Public(),
 	}, nil
 }

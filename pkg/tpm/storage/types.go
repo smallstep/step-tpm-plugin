@@ -1,16 +1,21 @@
 package storage
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 type AK struct {
-	Name string
-	Data []byte
+	Name      string
+	Data      []byte
+	CreatedAt time.Time
 }
 
 type Key struct {
-	Name string
-	Data []byte
-	// TODO: add properties to identify the AK that attested this key (if it was attested)? Created?
+	Name       string
+	Data       []byte
+	AttestedBy string
+	CreatedAt  time.Time
 }
 
 const (
@@ -26,15 +31,18 @@ const (
 )
 
 type serializedAK struct {
-	Name string
-	Type tpmObjectType
-	Data []byte
+	Name      string
+	Type      tpmObjectType
+	Data      []byte
+	CreatedAt time.Time
 }
 
 type serializedKey struct {
-	Name string
-	Type tpmObjectType
-	Data []byte
+	Name       string
+	Type       tpmObjectType
+	Data       []byte
+	AttestedBy string
+	CreatedAt  time.Time
 }
 
 func keyForKey(name string) string {
