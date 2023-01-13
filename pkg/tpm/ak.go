@@ -29,7 +29,7 @@ func (t *TPM) CreateAK(ctx context.Context, name string) (*storage.AK, error) { 
 		// to be far, isn't even used on Linux TPMs)
 		nameHex := make([]byte, 5)
 		if n, err := rand.Read(nameHex); err != nil || n != len(nameHex) {
-			return nil, err
+			return nil, fmt.Errorf("rand.Read() failed with %d/%d bytes read and error: %v", n, len(nameHex), err)
 		}
 		name = fmt.Sprintf("%x", nameHex)
 	}
@@ -37,7 +37,6 @@ func (t *TPM) CreateAK(ctx context.Context, name string) (*storage.AK, error) { 
 	prefixedName := fmt.Sprintf("ak-%s", name)
 
 	akConfig := attest.AKConfig{
-		//Name: "test-this", // NOTE: specifying the name and trying to create this multiple times will error
 		Name: prefixedName,
 	}
 	ak, err := at.NewAK(&akConfig)
@@ -48,24 +47,16 @@ func (t *TPM) CreateAK(ctx context.Context, name string) (*storage.AK, error) { 
 
 	fmt.Println(ak)
 
-	b, err := ak.Marshal()
+	data, err := ak.Marshal()
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println(b)
-
 	fmt.Println(ak.AttestationParameters())
 
 	storedAK := &storage.AK{
-		// TODO: name will only work on Windows; on Linux there's no way to specify this,
-		// there'll only be a blob data. Provide our own identifier instead? Or include a hash
-		// as part of the name, so that it can be looked up? Hash of the public key? We want to
-		// be able to easily specify certain names/files for the keys so that they can be used
-		// for attesting other keys, then new keys can be created and attested, and the keys can
-		// then be more easily used to be loaded for signing operations.
 		Name: name,
-		Data: b,
+		Data: data,
 	}
 
 	if err := t.store.AddAK(storedAK); err != nil {

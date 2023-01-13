@@ -9,12 +9,46 @@ import (
 	"io"
 
 	"github.com/google/go-attestation/attest"
+	"github.com/smallstep/step-tpm-plugin/pkg/tpm/internal/key"
 	"github.com/smallstep/step-tpm-plugin/pkg/tpm/storage"
 )
 
 func (t *TPM) CreateKey(ctx context.Context, name string) (*storage.Key, error) {
-	// TODO: create a key in the TPM without attesting
-	return nil, errors.New("not implemented yet; requires different TPM abstraction (not *attest.TPM)")
+
+	if err := t.Open(ctx); err != nil {
+		return nil, fmt.Errorf("failed opening TPM: %w", err)
+	}
+	defer t.Close(ctx, false)
+
+	if name == "" {
+		nameHex := make([]byte, 5)
+		if n, err := rand.Read(nameHex); err != nil || n != len(nameHex) {
+			return nil, fmt.Errorf("rand.Read() failed with %d/%d bytes read and error: %v", n, len(nameHex), err)
+		}
+		name = fmt.Sprintf("%x", nameHex)
+	}
+
+	prefixedKeyName := fmt.Sprintf("app-%s", name)
+
+	data, err := key.Create(t.deviceName, prefixedKeyName) // TODO: additional parameters
+	if err != nil {
+		return nil, fmt.Errorf("failed creating key: %w", err)
+	}
+
+	storedKey := &storage.Key{
+		Name: name,
+		Data: data,
+	}
+
+	if err := t.store.AddKey(storedKey); err != nil {
+		return nil, err
+	}
+
+	if err := t.store.Persist(); err != nil {
+		return nil, fmt.Errorf("error persisting to storage: %w", err)
+	}
+
+	return storedKey, nil
 }
 
 // TODO: every interaction with the actual TPM now opens the "connection" when required, then
@@ -48,15 +82,14 @@ func (t *TPM) AttestKey(ctx context.Context, akName, name string) (*storage.Key,
 	defer loadedAK.Close(at)
 
 	if name == "" {
-		nameHex := make([]byte, 5) // TODO: only generate a name if not provided as value/flag
+		nameHex := make([]byte, 5)
 		if n, err := rand.Read(nameHex); err != nil || n != len(nameHex) {
-			return nil, err
-			//return "", fmt.Errorf("rand.Read() failed with %d/%d bytes read and error: %v", n, len(nameHex), err)
+			return nil, fmt.Errorf("rand.Read() failed with %d/%d bytes read and error: %v", n, len(nameHex), err)
 		}
 		name = fmt.Sprintf("%x", nameHex)
 	}
 
-	prefixedKeyName := fmt.Sprintf("app-%x", name)
+	prefixedKeyName := fmt.Sprintf("app-%s", name)
 
 	keyConfig := &attest.KeyConfig{
 		// TODO: provide values (through flags) for algorithm, size, name, prefix, qualifying data?
@@ -72,20 +105,14 @@ func (t *TPM) AttestKey(ctx context.Context, akName, name string) (*storage.Key,
 	}
 	defer key.Close()
 
-	b, err := key.Marshal()
+	data, err := key.Marshal()
 	if err != nil {
 		return nil, err
 	}
 
 	storedKey := &storage.Key{
-		// TODO: name will only work on Windows; on Linux there's no way to specify this,
-		// there'll only be a blob data. Provide our own identifier instead? Or include a hash
-		// as part of the name, so that it can be looked up? Hash of the public key? We want to
-		// be able to easily specify certain names/files for the keys so that they can be used
-		// for attesting other keys, then new keys can be created and attested, and the keys can
-		// then be more easily used to be loaded for signing operations.
-		Name: name, // no double prefix for "ak-""
-		Data: b,
+		Name: name,
+		Data: data,
 	}
 
 	if err := t.store.AddKey(storedKey); err != nil {

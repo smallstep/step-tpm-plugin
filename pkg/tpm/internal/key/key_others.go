@@ -1,0 +1,47 @@
+//go:build !windows
+// +build !windows
+
+package key
+
+import (
+	"fmt"
+
+	"github.com/google/go-attestation/attest"
+	"github.com/google/go-tpm/tpm2"
+	"github.com/smallstep/step-tpm-plugin/pkg/tpm/internal/open"
+)
+
+func create(deviceName, keyName string) ([]byte, error) {
+
+	rwc, err := open.TPM(deviceName)
+	if err != nil {
+		return nil, fmt.Errorf("error opening TPM: %w", err)
+	}
+	defer rwc.Close()
+
+	srk, _, err := getPrimaryKeyHandle(rwc, commonSrkEquivalentHandle)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get SRK handle: %v", err)
+	}
+
+	tmpl, err := templateFromConfig(&KeyConfig{Algorithm: RSA, Size: 2048}) // TODO: make configurable
+	if err != nil {
+		return nil, fmt.Errorf("incorrect key options: %v", err)
+	}
+
+	blob, pub, creationData, _, _, err := tpm2.CreateKey(rwc, srk, tpm2.PCRSelection{}, "", "", tmpl)
+	if err != nil {
+		return nil, fmt.Errorf("CreateKey() failed: %v", err)
+	}
+
+	out := serializedKey{
+		Encoding:   keyEncodingEncrypted,
+		TPMVersion: attest.TPMVersion20,
+		Name:       keyName,
+		Public:     pub,
+		Blob:       blob,
+		CreateData: creationData,
+	}
+
+	return out.Serialize()
+}

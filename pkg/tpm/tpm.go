@@ -65,7 +65,7 @@ func (t *TPM) Open(ctx context.Context) error {
 
 	t.lock.Lock()
 
-	if err := t.store.Load(); err != nil {
+	if err := t.store.Load(); err != nil { // TODO: load this once
 		return err
 	}
 
