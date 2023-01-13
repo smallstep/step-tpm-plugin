@@ -15,7 +15,34 @@ func fallbackTPMStore(ctx context.Context) (context.Context, error) {
 	return ctx, nil
 }
 
-func RequireTPM(ctx context.Context) (context.Context, error) {
+func ensureCloseWithPersist(ctx context.Context) (context.Context, error) {
+	t := tpm.FromContext(ctx)
+	if err := t.Open(ctx); err != nil { // needs to be opened first to lock the mutex
+		return ctx, fmt.Errorf("failed opening TPM: %w", err)
+	}
+	if err := t.Close(ctx, true); err != nil {
+		return ctx, fmt.Errorf("failed closing TPM: %w", err)
+	}
+	return ctx, nil
+}
+
+func RequireTPMWithoutStorage(ctx context.Context) (context.Context, error) {
+
+	var (
+		deviceName = flag.GetString(ctx, flag.FlagDeviceName) // TODO(hs): it feels a bit messy to rely on the flag here; can we improve?
+	)
+
+	pt, err := tpm.New(tpm.WithDeviceName(deviceName))
+	if err != nil {
+		return nil, fmt.Errorf("failed creating TPM: %w", err)
+	}
+
+	ctx = tpm.NewContext(ctx, pt)
+
+	return ctx, nil
+}
+
+func RequireTPMWithStorage(ctx context.Context) (context.Context, error) {
 
 	var (
 		deviceName  = flag.GetString(ctx, flag.FlagDeviceName) // TODO(hs): it feels a bit messy to rely on the flag here; can we improve?

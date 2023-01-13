@@ -24,7 +24,7 @@ func NewSignCSRCommand() *cobra.Command {
 		short = "temporary CSR sign command"
 	)
 
-	cmd := command.New("sign", short, long, runSignCSR, []command.Preparer{command.RequireTPM}, nil)
+	cmd := command.New("sign", short, long, runSignCSR, []command.Preparer{command.RequireTPMWithStorage}, nil)
 
 	cmd.Args = cobra.ExactArgs(1)
 

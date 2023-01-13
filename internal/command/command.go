@@ -27,6 +27,10 @@ var commonPreparers = []Preparer{
 	fallbackTPMStore,
 }
 
+var commonFinalizers = []Finalizer{
+	ensureCloseWithPersist,
+}
+
 func runE(fn Runner, preparers []Preparer, finalizers ...Finalizer) func(*cobra.Command, []string) error {
 	if fn == nil {
 		return nil
@@ -49,8 +53,13 @@ func runE(fn Runner, preparers []Preparer, finalizers ...Finalizer) func(*cobra.
 
 		// run the command
 		if err = fn(ctx); err == nil {
-			// and finally, run the finalizers registered for the command
-			if err := finalize(ctx); err != nil {
+			// run the finalizers registered for the command
+			if ctx, err = finalize(ctx, finalizers...); err != nil {
+				return err
+			}
+
+			// and finally, run common finalizers
+			if _, err = finalize(ctx, commonFinalizers...); err != nil {
 				return err
 			}
 		}
@@ -70,13 +79,13 @@ func prepare(parent context.Context, preparers ...Preparer) (ctx context.Context
 	return
 }
 
-func finalize(parent context.Context, finalizers ...Finalizer) (err error) {
-	ctx := parent
+func finalize(parent context.Context, finalizers ...Finalizer) (ctx context.Context, err error) {
+	ctx = parent
 	for _, f := range finalizers {
 		if ctx, err = f(ctx); err != nil {
 			break
 		}
 	}
 
-	return nil
+	return
 }

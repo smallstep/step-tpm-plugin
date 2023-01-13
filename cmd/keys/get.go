@@ -20,7 +20,7 @@ func NewGetKeyCommand() *cobra.Command {
 		short = "print TPM key base64 blob data"
 	)
 
-	cmd := command.New("get", short, long, runGetKey, []command.Preparer{command.RequireTPM}, nil) // TODO: rename this blob?
+	cmd := command.New("get", short, long, runGetKey, []command.Preparer{command.RequireTPMWithStorage}, nil) // TODO: rename this blob?
 
 	cmd.Args = cobra.ExactArgs(1)
 

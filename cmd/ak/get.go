@@ -20,7 +20,7 @@ func NewGetAKCommand() *cobra.Command {
 		short = "print AK base64 blob data"
 	)
 
-	cmd := command.New("get", short, long, runGetAK, []command.Preparer{command.RequireTPM}, nil)
+	cmd := command.New("get", short, long, runGetAK, []command.Preparer{command.RequireTPMWithStorage}, nil)
 
 	cmd.Args = cobra.ExactArgs(1)
 

@@ -20,7 +20,7 @@ func NewGetEKCommand() *cobra.Command {
 		short = "print TPM EK details"
 	)
 
-	cmd := command.New("get", short, long, runGetEK, []command.Preparer{command.RequireTPM}, nil)
+	cmd := command.New("get", short, long, runGetEK, []command.Preparer{command.RequireTPMWithoutStorage}, nil)
 
 	flag.Add(cmd,
 		flag.JSON(),

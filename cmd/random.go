@@ -18,7 +18,7 @@ func NewRandomCommand() *cobra.Command {
 		short = "subcommand for for generating random data"
 	)
 
-	cmd := command.New("random <command>", short, long, runRandom, []command.Preparer{command.RequireTPM}, nil)
+	cmd := command.New("random <command>", short, long, runRandom, []command.Preparer{command.RequireTPMWithoutStorage}, nil)
 
 	flag.Add(cmd,
 		flag.Device(), // TOOD(hs): currently unused here. Should affect (lazy) instantiation of the TPM.

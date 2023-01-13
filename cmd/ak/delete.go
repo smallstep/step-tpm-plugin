@@ -18,7 +18,7 @@ func NewDeleteAKCommand() *cobra.Command {
 		short = "delete an AK"
 	)
 
-	cmd := command.New("delete", short, long, runDeleteAK, []command.Preparer{command.RequireTPM}, nil)
+	cmd := command.New("delete", short, long, runDeleteAK, []command.Preparer{command.RequireTPMWithStorage}, nil)
 
 	cmd.Args = cobra.ExactArgs(1)
 

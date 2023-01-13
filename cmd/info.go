@@ -20,7 +20,7 @@ func NewInfoCommand() *cobra.Command {
 		short = "retrieve TPM information"
 	)
 
-	cmd := command.New("info", short, long, runInfo, []command.Preparer{command.RequireTPM}, nil)
+	cmd := command.New("info", short, long, runInfo, []command.Preparer{command.RequireTPMWithoutStorage}, nil)
 
 	cmd.Args = cobra.NoArgs
 

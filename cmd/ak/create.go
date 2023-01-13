@@ -20,7 +20,7 @@ func NewCreateAKCommand() *cobra.Command {
 		short = "create an AK"
 	)
 
-	cmd := command.New("create", short, long, runCreateAK, []command.Preparer{command.RequireTPM}, nil)
+	cmd := command.New("create", short, long, runCreateAK, []command.Preparer{command.RequireTPMWithStorage}, nil)
 
 	cmd.Args = cobra.RangeArgs(0, 1)
 
