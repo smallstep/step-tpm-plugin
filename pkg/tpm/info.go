@@ -7,6 +7,15 @@ import (
 	"github.com/google/go-attestation/attest"
 )
 
+type Info struct {
+	Version              uint8 // TODO: alias the `attest` types instead?
+	Interface            uint8
+	VendorInfo           string
+	Manufacturer         uint32
+	FirmwareVersionMajor int
+	FirmwareVersionMinor int
+}
+
 func (t *TPM) Info(ctx context.Context) (Info, error) {
 	result := Info{}
 	if err := t.Open(ctx); err != nil {

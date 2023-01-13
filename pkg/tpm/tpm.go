@@ -16,15 +16,6 @@ type TPM struct {
 	store        storage.TPMStore
 }
 
-type Info struct {
-	Version              uint8 // TODO: alias the `attest` types instead?
-	Interface            uint8
-	VendorInfo           string
-	Manufacturer         uint32
-	FirmwareVersionMajor int
-	FirmwareVersionMinor int
-}
-
 type NewTPMOption func(t *TPM) error
 
 func WithDeviceName(name string) NewTPMOption {

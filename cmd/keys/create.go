@@ -11,7 +11,6 @@ import (
 	"github.com/smallstep/step-tpm-plugin/internal/command"
 	"github.com/smallstep/step-tpm-plugin/internal/flag"
 	"github.com/smallstep/step-tpm-plugin/pkg/tpm"
-	"github.com/smallstep/step-tpm-plugin/pkg/tpm/storage"
 )
 
 func NewCreateKeyCommand() *cobra.Command {
@@ -48,7 +47,7 @@ func runCreateKey(ctx context.Context) error {
 	)
 
 	var (
-		key *storage.Key
+		key tpm.Key
 		err error
 	)
 

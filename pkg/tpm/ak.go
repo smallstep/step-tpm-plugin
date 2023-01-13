@@ -9,16 +9,22 @@ import (
 	"github.com/smallstep/step-tpm-plugin/pkg/tpm/storage"
 )
 
-func (t *TPM) CreateAK(ctx context.Context, name string) (*storage.AK, error) { // TODO: return information about AK too?
+type AK struct {
+	Name string
+	Data []byte
+}
 
+func (t *TPM) CreateAK(ctx context.Context, name string) (AK, error) { // TODO: return information about AK too?
+
+	result := AK{}
 	if err := t.Open(ctx); err != nil {
-		return nil, fmt.Errorf("failed opening TPM: %w", err)
+		return result, fmt.Errorf("failed opening TPM: %w", err)
 	}
 	defer t.Close(ctx, false)
 
 	at, err := attest.OpenTPM(t.attestConfig)
 	if err != nil {
-		return nil, fmt.Errorf("failed opening TPM: %w", err)
+		return result, fmt.Errorf("failed opening TPM: %w", err)
 	}
 	defer at.Close()
 
@@ -29,7 +35,7 @@ func (t *TPM) CreateAK(ctx context.Context, name string) (*storage.AK, error) { 
 		// to be far, isn't even used on Linux TPMs)
 		nameHex := make([]byte, 5)
 		if n, err := rand.Read(nameHex); err != nil || n != len(nameHex) {
-			return nil, fmt.Errorf("rand.Read() failed with %d/%d bytes read and error: %v", n, len(nameHex), err)
+			return result, fmt.Errorf("rand.Read() failed with %d/%d bytes read and error: %v", n, len(nameHex), err)
 		}
 		name = fmt.Sprintf("%x", nameHex)
 	}
@@ -41,18 +47,14 @@ func (t *TPM) CreateAK(ctx context.Context, name string) (*storage.AK, error) { 
 	}
 	ak, err := at.NewAK(&akConfig)
 	if err != nil {
-		return nil, err
+		return result, err
 	}
 	defer ak.Close(at)
 
-	fmt.Println(ak)
-
 	data, err := ak.Marshal()
 	if err != nil {
-		return nil, err
+		return result, err
 	}
-
-	fmt.Println(ak.AttestationParameters())
 
 	storedAK := &storage.AK{
 		Name: name,
@@ -60,34 +62,50 @@ func (t *TPM) CreateAK(ctx context.Context, name string) (*storage.AK, error) { 
 	}
 
 	if err := t.store.AddAK(storedAK); err != nil {
-		return nil, err
+		return result, err
 	}
 
 	if err := t.store.Persist(); err != nil {
-		return nil, err
+		return result, err
 	}
 
-	return storedAK, nil
+	return AK{Name: storedAK.Name, Data: storedAK.Data}, nil
 }
 
-func (t *TPM) GetAK(ctx context.Context, name string) (*storage.AK, error) {
+func (t *TPM) GetAK(ctx context.Context, name string) (AK, error) {
+
+	result := AK{}
+	if err := t.Open(ctx); err != nil {
+		return result, fmt.Errorf("failed opening TPM: %w", err)
+	}
+	defer t.Close(ctx, false)
+
+	ak, err := t.store.GetAK(name)
+	if err != nil {
+		return result, fmt.Errorf("error getting AK %q: %w", name, err)
+	}
+
+	return AK{Name: ak.Name, Data: ak.Data}, nil
+}
+
+func (t *TPM) ListAKs(ctx context.Context) ([]AK, error) {
 
 	if err := t.Open(ctx); err != nil {
 		return nil, fmt.Errorf("failed opening TPM: %w", err)
 	}
 	defer t.Close(ctx, false)
 
-	return t.store.GetAK(name)
-}
-
-func (t *TPM) ListAKs(ctx context.Context) ([]*storage.AK, error) {
-
-	if err := t.Open(ctx); err != nil {
-		return nil, fmt.Errorf("failed opening TPM: %w", err)
+	aks, err := t.store.ListAKs()
+	if err != nil {
+		return nil, fmt.Errorf("error listing AKs: %w", err)
 	}
-	defer t.Close(ctx, false)
 
-	return t.store.ListAKs()
+	result := make([]AK, 0, len(aks))
+	for _, ak := range aks {
+		result = append(result, AK{Name: ak.Name, Data: ak.Data})
+	}
+
+	return result, nil
 }
 
 func (t *TPM) DeleteAK(ctx context.Context, name string) error {

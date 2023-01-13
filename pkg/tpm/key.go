@@ -13,17 +13,24 @@ import (
 	"github.com/smallstep/step-tpm-plugin/pkg/tpm/storage"
 )
 
-func (t *TPM) CreateKey(ctx context.Context, name string) (*storage.Key, error) {
+type Key struct {
+	Name string
+	Data []byte
+	// TODO: add properties to identify the AK that attested this key (if it was attested)? Created?
+}
 
+func (t *TPM) CreateKey(ctx context.Context, name string) (Key, error) {
+
+	result := Key{}
 	if err := t.Open(ctx); err != nil {
-		return nil, fmt.Errorf("failed opening TPM: %w", err)
+		return result, fmt.Errorf("failed opening TPM: %w", err)
 	}
 	defer t.Close(ctx, false)
 
 	if name == "" {
 		nameHex := make([]byte, 5)
 		if n, err := rand.Read(nameHex); err != nil || n != len(nameHex) {
-			return nil, fmt.Errorf("rand.Read() failed with %d/%d bytes read and error: %v", n, len(nameHex), err)
+			return result, fmt.Errorf("rand.Read() failed with %d/%d bytes read and error: %v", n, len(nameHex), err)
 		}
 		name = fmt.Sprintf("%x", nameHex)
 	}
@@ -32,7 +39,7 @@ func (t *TPM) CreateKey(ctx context.Context, name string) (*storage.Key, error) 
 
 	data, err := key.Create(t.deviceName, prefixedKeyName) // TODO: additional parameters
 	if err != nil {
-		return nil, fmt.Errorf("failed creating key: %w", err)
+		return result, fmt.Errorf("failed creating key: %w", err)
 	}
 
 	storedKey := &storage.Key{
@@ -41,14 +48,14 @@ func (t *TPM) CreateKey(ctx context.Context, name string) (*storage.Key, error) 
 	}
 
 	if err := t.store.AddKey(storedKey); err != nil {
-		return nil, err
+		return result, fmt.Errorf("error adding key to storage: %w", err)
 	}
 
 	if err := t.store.Persist(); err != nil {
-		return nil, fmt.Errorf("error persisting to storage: %w", err)
+		return result, fmt.Errorf("error persisting to storage: %w", err)
 	}
 
-	return storedKey, nil
+	return Key{Name: storedKey.Name, Data: storedKey.Data}, nil
 }
 
 // TODO: every interaction with the actual TPM now opens the "connection" when required, then
@@ -57,34 +64,35 @@ func (t *TPM) CreateKey(ctx context.Context, name string) (*storage.Key, error) 
 // by go-attestation, so it might come down to replicating a lot of that logic. It could involve
 // checking multiple locks and/or pointers and instantiating when required. Opening and closing
 // on-demand is the simplest way and safe to do for now, though.
-func (t *TPM) AttestKey(ctx context.Context, akName, name string) (*storage.Key, error) {
+func (t *TPM) AttestKey(ctx context.Context, akName, name string) (Key, error) {
 
+	result := Key{}
 	if err := t.Open(ctx); err != nil {
-		return nil, fmt.Errorf("failed opening TPM: %w", err)
+		return result, fmt.Errorf("failed opening TPM: %w", err)
 	}
 	defer t.Close(ctx, false)
 
 	at, err := attest.OpenTPM(t.attestConfig)
 	if err != nil {
-		return nil, fmt.Errorf("failed opening TPM: %w", err)
+		return result, fmt.Errorf("failed opening TPM: %w", err)
 	}
 	defer at.Close()
 
 	ak, err := t.store.GetAK(akName)
 	if err != nil {
-		return nil, err
+		return result, fmt.Errorf("error getting AK %q: %w", akName, err)
 	}
 
 	loadedAK, err := at.LoadAK(ak.Data)
 	if err != nil {
-		return nil, err
+		return result, fmt.Errorf("error loading AK %q: %w", akName, err)
 	}
 	defer loadedAK.Close(at)
 
 	if name == "" {
 		nameHex := make([]byte, 5)
 		if n, err := rand.Read(nameHex); err != nil || n != len(nameHex) {
-			return nil, fmt.Errorf("rand.Read() failed with %d/%d bytes read and error: %v", n, len(nameHex), err)
+			return result, fmt.Errorf("rand.Read() failed with %d/%d bytes read and error: %v", n, len(nameHex), err)
 		}
 		name = fmt.Sprintf("%x", nameHex)
 	}
@@ -101,13 +109,13 @@ func (t *TPM) AttestKey(ctx context.Context, akName, name string) (*storage.Key,
 
 	key, err := at.NewKey(loadedAK, keyConfig)
 	if err != nil {
-		return nil, err
+		return result, fmt.Errorf("error creating key: %w", err)
 	}
 	defer key.Close()
 
 	data, err := key.Marshal()
 	if err != nil {
-		return nil, err
+		return result, fmt.Errorf("error marshaling key: %w", err)
 	}
 
 	storedKey := &storage.Key{
@@ -116,34 +124,50 @@ func (t *TPM) AttestKey(ctx context.Context, akName, name string) (*storage.Key,
 	}
 
 	if err := t.store.AddKey(storedKey); err != nil {
-		return nil, err
+		return result, fmt.Errorf("error adding key to storage: %w", err)
 	}
 
 	if err := t.store.Persist(); err != nil {
-		return nil, fmt.Errorf("error persisting to storage: %w", err)
+		return result, fmt.Errorf("error persisting to storage: %w", err)
 	}
 
-	return storedKey, nil
+	return Key{Name: storedKey.Name, Data: storedKey.Data}, nil
 }
 
-func (t *TPM) GetKey(ctx context.Context, name string) (*storage.Key, error) {
+func (t *TPM) GetKey(ctx context.Context, name string) (Key, error) {
+
+	result := Key{}
+	if err := t.Open(ctx); err != nil {
+		return result, fmt.Errorf("failed opening TPM: %w", err)
+	}
+	defer t.Close(ctx, false)
+
+	key, err := t.store.GetKey(name)
+	if err != nil {
+		return result, fmt.Errorf("error getting Key %q: %w", name, err)
+	}
+
+	return Key{Name: key.Name, Data: key.Data}, nil
+}
+
+func (t *TPM) ListKeys(ctx context.Context) ([]Key, error) {
 
 	if err := t.Open(ctx); err != nil {
 		return nil, fmt.Errorf("failed opening TPM: %w", err)
 	}
 	defer t.Close(ctx, false)
 
-	return t.store.GetKey(name)
-}
-
-func (t *TPM) ListKeys(ctx context.Context) ([]*storage.Key, error) {
-
-	if err := t.Open(ctx); err != nil {
-		return nil, fmt.Errorf("failed opening TPM: %w", err)
+	keys, err := t.store.ListKeys()
+	if err != nil {
+		return nil, fmt.Errorf("error listing keys: %w", err)
 	}
-	defer t.Close(ctx, false)
 
-	return t.store.ListKeys()
+	result := make([]Key, 0, len(keys))
+	for _, key := range keys {
+		result = append(result, Key{Name: key.Name, Data: key.Data})
+	}
+
+	return result, nil
 }
 
 func (t *TPM) GetKeyCertificationParameters(ctx context.Context, name string) (attest.CertificationParameters, error) {
@@ -208,7 +232,7 @@ func (t *TPM) DeleteKey(ctx context.Context, name string) error {
 // signer implements crypto.Signer backed by a TPM key
 type signer struct {
 	tpm    *TPM
-	key    *storage.Key
+	key    Key
 	public crypto.PublicKey
 }
 
@@ -279,7 +303,7 @@ func (t *TPM) GetSigner(ctx context.Context, name string) (crypto.Signer, error)
 
 	return &signer{
 		tpm:    t,
-		key:    key,
+		key:    Key{Name: name, Data: key.Data},
 		public: loadedKey.Public(),
 	}, nil
 }
