@@ -26,6 +26,7 @@ func NewCreateAKCommand() *cobra.Command {
 
 	flag.Add(cmd,
 		flag.StorageFile(),
+		flag.StorageDirectory(),
 		flag.Device(),
 		flag.JSON(),
 	)

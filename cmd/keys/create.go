@@ -26,9 +26,10 @@ func NewCreateKeyCommand() *cobra.Command {
 	cmd.Args = cobra.RangeArgs(0, 1)
 
 	flag.Add(cmd,
+		flag.StorageFile(),
+		flag.StorageDirectory(),
 		flag.JSON(),
 		flag.Device(),
-		flag.StorageFile(),
 		flag.String{
 			Name:        "ak",
 			Description: "Name of the AK to attest new key with",

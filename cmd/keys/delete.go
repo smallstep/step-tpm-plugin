@@ -24,9 +24,10 @@ func NewDeleteKeyCommand() *cobra.Command {
 	cmd.Args = cobra.ExactArgs(1)
 
 	flag.Add(cmd,
+		flag.StorageFile(),
+		flag.StorageDirectory(),
 		flag.JSON(),
 		flag.Device(),
-		flag.StorageFile(),
 	)
 
 	return cmd

@@ -3,9 +3,10 @@ package flag
 import "github.com/spf13/cobra"
 
 const (
-	FlagDeviceName  = "device"
-	FlagStorageFile = "storage-file"
-	FlagJSON        = "json"
+	FlagDeviceName       = "device"
+	FlagStorageFile      = "storage-file"
+	FlagStorageDirectory = "storage-directory"
+	FlagJSON             = "json"
 )
 
 // Flag wraps the set of flags.
@@ -117,8 +118,17 @@ func Device() String {
 func StorageFile() String {
 	return String{
 		Name:        FlagStorageFile,
-		Shorthand:   "s",
 		Description: "Filename for TPM key storage",
-		Default:     "data.json",
+		Default:     "",
+	}
+}
+
+// StorageDirectory returns a "storage-directory" string flag.
+func StorageDirectory() String {
+	return String{
+		Name:        FlagStorageDirectory,
+		Shorthand:   "s",
+		Description: "Directory to store TPM keys",
+		Default:     "tpmkeys",
 	}
 }

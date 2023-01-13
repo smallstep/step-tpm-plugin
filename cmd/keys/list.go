@@ -27,9 +27,10 @@ func NewListKeysCommand() *cobra.Command {
 	cmd.Args = cobra.NoArgs
 
 	flag.Add(cmd,
+		flag.StorageFile(),
+		flag.StorageDirectory(),
 		flag.JSON(),
 		flag.Device(),
-		flag.StorageFile(),
 	)
 
 	return cmd

@@ -1,0 +1,167 @@
+package storage
+
+import (
+	"bytes"
+	"fmt"
+	"path/filepath"
+	"strings"
+
+	"github.com/peterbourgon/diskv/v3"
+)
+
+// Dirstore is a concrete implementation of the TPMStore interface that
+// stores TPM keys in a directory.
+type Dirstore struct {
+	store     *diskv.Diskv
+	directory string
+}
+
+func advancedTransform(key string) *diskv.PathKey {
+	path := strings.Split(key, "/")
+	last := len(path) - 1
+	return &diskv.PathKey{
+		Path:     path[:last],
+		FileName: path[last] + ".tpmkey",
+	}
+}
+
+func inverseTransform(pathKey *diskv.PathKey) (key string) {
+	tpmext := filepath.Ext(pathKey.FileName)
+	if tpmext != ".tpmkey" { // skipping
+		return ""
+	}
+	return strings.Join(pathKey.Path, "/") + pathKey.FileName[:len(pathKey.FileName)-7]
+}
+
+// NewDirstore creates a new instance of a Direstore
+func NewDirstore(directory string) *Dirstore {
+	return &Dirstore{
+		store: diskv.New(diskv.Options{
+			BasePath:          directory,
+			AdvancedTransform: advancedTransform,
+			InverseTransform:  inverseTransform,
+			CacheSizeMax:      1024 * 1024,
+		}),
+		directory: directory,
+	}
+}
+
+func (s *Dirstore) ListKeys() ([]*Key, error) {
+	var result = make([]*Key, 0)
+	c := s.store.KeysPrefix(keyPrefix, nil)
+	for k := range c {
+		data, err := s.store.Read(k)
+		if err != nil {
+			return nil, fmt.Errorf("error reading from store: %w", err)
+		}
+		result = append(result, &Key{Name: strings.TrimPrefix(k, keyPrefix), Data: data})
+	}
+	return result, nil
+}
+
+func (s *Dirstore) ListKeyNames() []string {
+	var result = make([]string, 0)
+	c := s.store.KeysPrefix(keyPrefix, nil)
+	for k := range c {
+		result = append(result, strings.TrimPrefix(k, keyPrefix))
+	}
+	return result
+}
+
+func (s *Dirstore) GetKey(name string) (*Key, error) {
+	key := keyForKey(name)
+	if !s.store.Has(key) {
+		return nil, nil
+	}
+
+	data, err := s.store.Read(key)
+	if err != nil {
+		return nil, fmt.Errorf("error reading from store: %w", err)
+	}
+
+	return &Key{Name: name, Data: data}, nil
+}
+
+func (s *Dirstore) AddKey(key *Key) error {
+	k := keyForKey(key.Name)
+	if err := s.store.WriteStream(k, bytes.NewBuffer(key.Data), true); err != nil {
+		return fmt.Errorf("error writing to disk: %w", err)
+	}
+	return nil
+}
+
+func (s *Dirstore) DeleteKey(name string) error {
+	key := keyForKey(name)
+	if !s.store.Has(key) {
+		return nil
+	}
+	if err := s.store.Erase(key); err != nil {
+		return fmt.Errorf("error deleting from disk: %w", err)
+	}
+	return nil
+}
+
+func (s *Dirstore) ListAKs() ([]*AK, error) {
+	var result = make([]*AK, 0)
+	c := s.store.KeysPrefix(akPrefix, nil)
+	for k := range c {
+		data, err := s.store.Read(k)
+		if err != nil {
+			return nil, fmt.Errorf("error reading from store: %w", err)
+		}
+		result = append(result, &AK{Name: strings.TrimPrefix(k, akPrefix), Data: data})
+	}
+	return result, nil
+}
+
+func (s *Dirstore) ListAKNames() []string {
+	var result = make([]string, 0)
+	c := s.store.KeysPrefix(akPrefix, nil)
+	for k := range c {
+		result = append(result, strings.TrimPrefix(k, akPrefix))
+	}
+	return result
+}
+
+func (s *Dirstore) GetAK(name string) (*AK, error) {
+	key := keyForAK(name)
+	if !s.store.Has(key) {
+		return nil, nil
+	}
+
+	data, err := s.store.Read(key)
+	if err != nil {
+		return nil, fmt.Errorf("error reading from store: %w", err)
+	}
+
+	return &AK{Name: name, Data: data}, nil
+}
+
+func (s *Dirstore) AddAK(ak *AK) error {
+	k := keyForAK(ak.Name)
+	if err := s.store.WriteStream(k, bytes.NewBuffer(ak.Data), true); err != nil {
+		return fmt.Errorf("error writing to disk: %w", err)
+	}
+	return nil
+}
+
+func (s *Dirstore) DeleteAK(name string) error {
+	key := keyForAK(name)
+	if !s.store.Has(key) {
+		return nil
+	}
+	if err := s.store.Erase(key); err != nil {
+		return fmt.Errorf("error deleting from disk: %w", err)
+	}
+	return nil
+}
+
+func (s *Dirstore) Persist() error {
+	return nil
+}
+
+func (s *Dirstore) Load() error {
+	return nil
+}
+
+var _ TPMStore = (*Dirstore)(nil)
