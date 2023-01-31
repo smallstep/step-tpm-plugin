@@ -37,7 +37,6 @@ func NewListKeysCommand() *cobra.Command {
 }
 
 func runListKeys(ctx context.Context) error {
-
 	var (
 		t    = tpm.FromContext(ctx)
 		json = flag.GetBool(ctx, flag.FlagJSON)

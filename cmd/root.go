@@ -40,6 +40,6 @@ func init() {
 		NewKeyCommand(),
 		NewRandomCommand(),
 		NewCSRCommand(),
+		NewVersionCommand(),
 	)
-
 }

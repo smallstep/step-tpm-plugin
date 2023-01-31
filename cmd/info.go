@@ -33,7 +33,6 @@ func NewInfoCommand() *cobra.Command {
 }
 
 func runInfo(ctx context.Context) error {
-
 	var (
 		t    = tpm.FromContext(ctx)
 		json = flag.GetBool(ctx, flag.FlagJSON)

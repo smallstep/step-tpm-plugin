@@ -34,7 +34,6 @@ func NewListAKCommand() *cobra.Command {
 }
 
 func runListAK(ctx context.Context) error {
-
 	var (
 		t = tpm.FromContext(ctx)
 	)

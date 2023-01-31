@@ -40,7 +40,6 @@ func NewSignCSRCommand() *cobra.Command {
 
 // TODO: remove me; temporary function until we get the abstraction right
 func runSignCSR(ctx context.Context) error {
-
 	var (
 		t    = tpm.FromContext(ctx)
 		name = flag.FirstArg(ctx)
@@ -87,7 +86,7 @@ func runSignCSR(ctx context.Context) error {
 		return fmt.Errorf("error parsing certificate request: %w", err)
 	}
 
-	fmt.Println(fmt.Sprintf("%#+v", csr))
+	fmt.Printf("%#+v\n", csr)
 
 	fmt.Println(base64.StdEncoding.EncodeToString(csr.Raw))
 
