@@ -39,7 +39,6 @@ func NewCreateKeyCommand() *cobra.Command {
 }
 
 func runCreateKey(ctx context.Context) error {
-
 	var (
 		t      = tpm.FromContext(ctx)
 		name   = flag.FirstArg(ctx)

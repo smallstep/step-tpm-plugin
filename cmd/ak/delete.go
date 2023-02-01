@@ -33,7 +33,6 @@ func NewDeleteAKCommand() *cobra.Command {
 }
 
 func runDeleteAK(ctx context.Context) error {
-
 	var (
 		t    = tpm.FromContext(ctx)
 		name = flag.FirstArg(ctx)

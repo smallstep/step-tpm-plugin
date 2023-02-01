@@ -41,7 +41,6 @@ func NewRandomCommand() *cobra.Command {
 }
 
 func runRandom(ctx context.Context) error {
-
 	var (
 		t         = tpm.FromContext(ctx)
 		size      = flag.GetInt(ctx, "size")

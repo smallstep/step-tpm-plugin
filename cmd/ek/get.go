@@ -31,7 +31,6 @@ func NewGetEKCommand() *cobra.Command {
 }
 
 func runGetEK(ctx context.Context) error {
-
 	var (
 		t    = tpm.FromContext(ctx)
 		json = flag.GetBool(ctx, flag.FlagJSON)

@@ -34,7 +34,6 @@ func NewDeleteKeyCommand() *cobra.Command {
 }
 
 func runDeleteKey(ctx context.Context) error {
-
 	var (
 		t    = tpm.FromContext(ctx)
 		name = flag.FirstArg(ctx)

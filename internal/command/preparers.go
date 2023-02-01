@@ -28,7 +28,6 @@ func ensureCloseWithPersist(ctx context.Context) (context.Context, error) {
 }
 
 func RequireTPMWithoutStorage(ctx context.Context) (context.Context, error) {
-
 	var (
 		deviceName = flag.GetString(ctx, flag.FlagDeviceName) // TODO(hs): it feels a bit messy to rely on the flag here; can we improve?
 	)
@@ -44,7 +43,6 @@ func RequireTPMWithoutStorage(ctx context.Context) (context.Context, error) {
 }
 
 func RequireTPMWithStorage(ctx context.Context) (context.Context, error) {
-
 	var (
 		deviceName       = flag.GetString(ctx, flag.FlagDeviceName) // TODO(hs): it feels a bit messy to rely on the flag here; can we improve?
 		storageFile      = flag.GetString(ctx, flag.FlagStorageFile)
