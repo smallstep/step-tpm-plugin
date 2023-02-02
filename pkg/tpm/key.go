@@ -19,6 +19,8 @@ type Key struct {
 	Data       []byte
 	AttestedBy string
 	CreatedAt  time.Time
+
+	tpm *TPM
 }
 
 type CreateKeyConfig struct {
@@ -86,7 +88,7 @@ func (t *TPM) CreateKey(ctx context.Context, name string, config CreateKeyConfig
 		return result, fmt.Errorf("error persisting to storage: %w", err)
 	}
 
-	return Key{Name: storedKey.Name, Data: storedKey.Data, CreatedAt: now}, nil
+	return Key{Name: storedKey.Name, Data: storedKey.Data, CreatedAt: now, tpm: t}, nil
 }
 
 // TODO: every interaction with the actual TPM now opens the "connection" when required, then
@@ -165,7 +167,7 @@ func (t *TPM) AttestKey(ctx context.Context, akName, name string, config AttestK
 		return result, fmt.Errorf("error persisting to storage: %w", err)
 	}
 
-	return Key{Name: storedKey.Name, Data: storedKey.Data, AttestedBy: akName, CreatedAt: now}, nil
+	return Key{Name: storedKey.Name, Data: storedKey.Data, AttestedBy: akName, CreatedAt: now, tpm: t}, nil
 }
 
 func (t *TPM) GetKey(ctx context.Context, name string) (Key, error) {
@@ -181,7 +183,7 @@ func (t *TPM) GetKey(ctx context.Context, name string) (Key, error) {
 		return result, fmt.Errorf("error getting Key %q: %w", name, err)
 	}
 
-	return Key{Name: key.Name, Data: key.Data, AttestedBy: key.AttestedBy, CreatedAt: key.CreatedAt}, nil
+	return Key{Name: key.Name, Data: key.Data, AttestedBy: key.AttestedBy, CreatedAt: key.CreatedAt, tpm: t}, nil
 }
 
 func (t *TPM) ListKeys(ctx context.Context) ([]Key, error) {
@@ -198,7 +200,7 @@ func (t *TPM) ListKeys(ctx context.Context) ([]Key, error) {
 
 	result := make([]Key, 0, len(keys))
 	for _, key := range keys {
-		result = append(result, Key{Name: key.Name, Data: key.Data, AttestedBy: key.AttestedBy, CreatedAt: key.CreatedAt})
+		result = append(result, Key{Name: key.Name, Data: key.Data, AttestedBy: key.AttestedBy, CreatedAt: key.CreatedAt, tpm: t})
 	}
 
 	return result, nil
@@ -256,7 +258,7 @@ func (t *TPM) DeleteKey(ctx context.Context, name string) error {
 	}
 
 	if err := t.store.DeleteKey(name); err != nil {
-		return fmt.Errorf("error deleting key: %w", err)
+		return fmt.Errorf("error deleting key from storage: %w", err)
 	}
 
 	if err := t.store.Persist(); err != nil {
@@ -340,7 +342,7 @@ func (t *TPM) GetSigner(ctx context.Context, name string) (crypto.Signer, error)
 
 	return &signer{
 		tpm:    t,
-		key:    Key{Name: name, Data: key.Data, AttestedBy: key.AttestedBy, CreatedAt: key.CreatedAt},
+		key:    Key{Name: name, Data: key.Data, AttestedBy: key.AttestedBy, CreatedAt: key.CreatedAt, tpm: t},
 		public: loadedKey.Public(),
 	}, nil
 }

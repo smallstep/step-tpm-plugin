@@ -14,6 +14,8 @@ type AK struct {
 	Name      string
 	Data      []byte
 	CreatedAt time.Time
+
+	tpm *TPM
 }
 
 func (t *TPM) CreateAK(ctx context.Context, name string) (AK, error) { // TODO: return information about AK too?
@@ -74,7 +76,7 @@ func (t *TPM) CreateAK(ctx context.Context, name string) (AK, error) { // TODO: 
 		return result, err
 	}
 
-	return AK{Name: storedAK.Name, Data: storedAK.Data, CreatedAt: now}, nil
+	return AK{Name: storedAK.Name, Data: storedAK.Data, CreatedAt: now, tpm: t}, nil
 }
 
 func (t *TPM) GetAK(ctx context.Context, name string) (AK, error) {
@@ -90,7 +92,7 @@ func (t *TPM) GetAK(ctx context.Context, name string) (AK, error) {
 		return result, fmt.Errorf("error getting AK %q: %w", name, err)
 	}
 
-	return AK{Name: ak.Name, Data: ak.Data, CreatedAt: ak.CreatedAt}, nil
+	return AK{Name: ak.Name, Data: ak.Data, CreatedAt: ak.CreatedAt, tpm: t}, nil
 }
 
 func (t *TPM) ListAKs(ctx context.Context) ([]AK, error) {
@@ -107,7 +109,7 @@ func (t *TPM) ListAKs(ctx context.Context) ([]AK, error) {
 
 	result := make([]AK, 0, len(aks))
 	for _, ak := range aks {
-		result = append(result, AK{Name: ak.Name, Data: ak.Data, CreatedAt: ak.CreatedAt})
+		result = append(result, AK{Name: ak.Name, Data: ak.Data, CreatedAt: ak.CreatedAt, tpm: t})
 	}
 
 	return result, nil
@@ -120,8 +122,26 @@ func (t *TPM) DeleteAK(ctx context.Context, name string) error {
 	}
 	defer t.Close(ctx, false)
 
+	at, err := attest.OpenTPM(t.attestConfig)
+	if err != nil {
+		return fmt.Errorf("failed opening TPM: %w", err)
+	}
+	defer at.Close()
+
+	ak, err := t.store.GetAK(name)
+	if err != nil {
+		return fmt.Errorf("failed loading AK: %w", err)
+	}
+
+	// TODO: catch case when named AK isn't found; tpm.GetAK returns nil in that case,
+	// resulting in a nil pointer. Need an ErrNotFound like type from the storage layer and appropriate
+	// handling?
+	if err := at.DeleteKey(ak.Data); err != nil {
+		return fmt.Errorf("failed deleting AK: %w", err)
+	}
+
 	if err := t.store.DeleteAK(name); err != nil {
-		return fmt.Errorf("error deleting AK: %w", err)
+		return fmt.Errorf("error deleting AK from storage: %w", err)
 	}
 
 	if err := t.store.Persist(); err != nil {
