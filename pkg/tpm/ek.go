@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"path"
@@ -52,7 +51,7 @@ func (t *TPM) GetEKs(ctx context.Context) ([]*EK, error) {
 			var u *url.URL
 			u, err = url.Parse(certificateURL)
 			if err != nil {
-				log.Fatal(err)
+				return nil, fmt.Errorf("error parsing EK certificate URL %q: %w", certificateURL, err)
 			}
 
 			// Ensure the URL is in the right format; for Intel TPMs, the path
@@ -70,33 +69,33 @@ func (t *TPM) GetEKs(ctx context.Context) ([]*EK, error) {
 
 			u, err = url.Parse(s)
 			if err != nil {
-				log.Fatal(err)
+				return nil, fmt.Errorf("error parsing Intel EK certificate URL: %w", err)
 			}
 
 			var r *http.Response
 			r, err = http.Get(u.String())
 			if err != nil {
-				log.Fatal(err)
+				return nil, fmt.Errorf("error retrieving EK certificate from %q: %w", u.String(), err)
 			}
 			defer r.Body.Close()
 
 			if r.StatusCode != http.StatusOK {
-				log.Fatalf("http get resulted in %d", r.StatusCode)
+				return nil, fmt.Errorf("http request to %q failed with status %d", u.String(), r.StatusCode)
 			}
 
 			var c intelEKCertResponse
 			if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
-				log.Fatal(err)
+				return nil, fmt.Errorf("error decoding EK certificate response: %w", err)
 			}
 
 			cb, err := base64.URLEncoding.DecodeString(c.Certificate)
 			if err != nil {
-				log.Fatal(err)
+				return nil, fmt.Errorf("error base64 decoding EK certificate response: %w", err)
 			}
 
 			ekCert, err = attest.ParseEKCertificate(cb)
 			if err != nil {
-				log.Fatal(err)
+				return nil, fmt.Errorf("error parsing EK certificate: %w", err)
 			}
 		}
 
