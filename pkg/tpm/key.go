@@ -206,33 +206,6 @@ func (t *TPM) ListKeys(ctx context.Context) ([]Key, error) {
 	return result, nil
 }
 
-func (t *TPM) GetKeyCertificationParameters(ctx context.Context, name string) (attest.CertificationParameters, error) {
-
-	result := attest.CertificationParameters{}
-	if err := t.Open(ctx); err != nil {
-		return result, fmt.Errorf("failed opening TPM: %w", err)
-	}
-	defer t.Close(ctx, false)
-
-	at, err := attest.OpenTPM(t.attestConfig)
-	if err != nil {
-		return result, fmt.Errorf("failed opening TPM: %w", err)
-	}
-	defer at.Close()
-
-	key, err := t.store.GetKey(name)
-	if err != nil {
-		return result, err
-	}
-
-	loadedKey, err := at.LoadKey(key.Data) // TODO: store the attestation parameters in the keystore instead too? That makes this operation simpler
-	if err != nil {
-		return attest.CertificationParameters{}, err
-	}
-
-	return loadedKey.CertificationParameters(), nil
-}
-
 func (t *TPM) DeleteKey(ctx context.Context, name string) error {
 	if err := t.Open(ctx); err != nil {
 		return fmt.Errorf("failed opening TPM: %w", err)
@@ -313,9 +286,7 @@ func (s *signer) Sign(rand io.Reader, digest []byte, opts crypto.SignerOpts) (si
 	return signer.Sign(rand, digest, opts)
 }
 
-// GetSigner ...
-//
-// TODO: conclude whether AKs should also be usable as signers?
+// GetSigner returns a crypto.Signer for a TPM key identified by name.
 func (t *TPM) GetSigner(ctx context.Context, name string) (crypto.Signer, error) {
 
 	if err := t.Open(ctx); err != nil {
@@ -345,4 +316,34 @@ func (t *TPM) GetSigner(ctx context.Context, name string) (crypto.Signer, error)
 		key:    Key{Name: name, Data: key.Data, AttestedBy: key.AttestedBy, CreatedAt: key.CreatedAt, tpm: t},
 		public: loadedKey.Public(),
 	}, nil
+}
+
+// Signer returns a crypto.Signer backed by the Key
+func (k Key) Signer(ctx context.Context) (crypto.Signer, error) {
+	return k.tpm.GetSigner(ctx, k.Name)
+}
+
+// CertificationParameters returns information about the key that can be used to
+// verify key certification.
+func (k Key) CertificationParameters(ctx context.Context) (params attest.CertificationParameters, err error) {
+	if err := k.tpm.Open(ctx); err != nil {
+		return params, fmt.Errorf("failed opening TPM: %w", err)
+	}
+	defer k.tpm.Close(ctx, false)
+
+	at, err := attest.OpenTPM(k.tpm.attestConfig)
+	if err != nil {
+		return params, fmt.Errorf("failed opening TPM: %w", err)
+	}
+	defer at.Close()
+
+	loadedKey, err := at.LoadKey(k.Data)
+	if err != nil {
+		return attest.CertificationParameters{}, fmt.Errorf("failed loading key: %w", err)
+	}
+	defer loadedKey.Close()
+
+	params = loadedKey.CertificationParameters()
+
+	return
 }

@@ -45,15 +45,19 @@ func runSignCSR(ctx context.Context) error {
 		name = flag.FirstArg(ctx)
 	)
 
-	signer, err := t.GetSigner(ctx, name)
+	key, err := t.GetKey(ctx, name)
 	if err != nil {
-		return fmt.Errorf("getting signer failed: %w", err)
+		return fmt.Errorf("getting key failed: %w", err)
+	}
+
+	signer, err := key.Signer(ctx)
+	if err != nil {
+		return fmt.Errorf("getting signer for key failed: %w", err)
 	}
 
 	fmt.Println(signer.Public())
 
-	// // // TODO: improve this function signature
-	params, err := t.GetKeyCertificationParameters(ctx, name)
+	params, err := key.CertificationParameters(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting key certification parameters: %w", err)
 	}
