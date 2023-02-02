@@ -21,9 +21,19 @@ type Key struct {
 	CreatedAt  time.Time
 }
 
+type CreateKeyConfig struct {
+	// Algorithm to be used, either RSA or ECDSA.
+	Algorithm string
+	// Size is used to specify the bit size of the key or elliptic curve. For
+	// example, '256' is used to specify curve P-256.
+	Size int
+
+	// TODO(hs): move key name to this struct?
+}
+
 type AttestKeyConfig struct {
 	// Algorithm to be used, either RSA or ECDSA.
-	Algorithm attest.Algorithm
+	Algorithm string
 	// Size is used to specify the bit size of the key or elliptic curve. For
 	// example, '256' is used to specify curve P-256.
 	Size int
@@ -33,7 +43,7 @@ type AttestKeyConfig struct {
 	// TODO(hs): add akName and key name to this struct?
 }
 
-func (t *TPM) CreateKey(ctx context.Context, name string) (Key, error) {
+func (t *TPM) CreateKey(ctx context.Context, name string, config CreateKeyConfig) (Key, error) {
 
 	result := Key{}
 	if err := t.Open(ctx); err != nil {
@@ -53,7 +63,11 @@ func (t *TPM) CreateKey(ctx context.Context, name string) (Key, error) {
 
 	prefixedKeyName := fmt.Sprintf("app-%s", name)
 
-	data, err := key.Create(t.deviceName, prefixedKeyName) // TODO: additional parameters
+	createConfig := key.CreateConfig{
+		Algorithm: string(config.Algorithm),
+		Size:      config.Size,
+	}
+	data, err := key.Create(t.deviceName, prefixedKeyName, createConfig)
 	if err != nil {
 		return result, fmt.Errorf("failed creating key: %w", err)
 	}
@@ -119,7 +133,7 @@ func (t *TPM) AttestKey(ctx context.Context, akName, name string, config AttestK
 	prefixedKeyName := fmt.Sprintf("app-%s", name)
 
 	keyConfig := &attest.KeyConfig{
-		Algorithm:      config.Algorithm,
+		Algorithm:      attest.Algorithm(config.Algorithm),
 		Size:           config.Size,
 		QualifyingData: config.QualifyingData,
 		Name:           prefixedKeyName,

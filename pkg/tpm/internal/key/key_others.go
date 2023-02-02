@@ -6,12 +6,11 @@ package key
 import (
 	"fmt"
 
-	"github.com/google/go-attestation/attest"
 	"github.com/google/go-tpm/tpm2"
 	"github.com/smallstep/step-tpm-plugin/pkg/tpm/internal/open"
 )
 
-func create(deviceName, keyName string) ([]byte, error) {
+func create(deviceName, keyName string, config CreateConfig) ([]byte, error) {
 
 	rwc, err := open.TPM(deviceName)
 	if err != nil {
@@ -24,7 +23,7 @@ func create(deviceName, keyName string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to get SRK handle: %v", err)
 	}
 
-	tmpl, err := templateFromConfig(&KeyConfig{Algorithm: RSA, Size: 2048}) // TODO: make configurable
+	tmpl, err := templateFromConfig(&KeyConfig{Algorithm: Algorithm(config.Algorithm), Size: config.Size})
 	if err != nil {
 		return nil, fmt.Errorf("incorrect key options: %v", err)
 	}
@@ -36,7 +35,7 @@ func create(deviceName, keyName string) ([]byte, error) {
 
 	out := serializedKey{
 		Encoding:   keyEncodingEncrypted,
-		TPMVersion: attest.TPMVersion20,
+		TPMVersion: uint8(2), // hardcoded to not import github.com/google/go-attestation/attest
 		Name:       keyName,
 		Public:     pub,
 		Blob:       blob,

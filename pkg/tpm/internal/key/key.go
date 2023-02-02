@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/google/go-attestation/attest"
 	"github.com/google/go-tpm/tpm2"
 	"github.com/google/go-tpm/tpmutil"
 )
@@ -57,7 +56,7 @@ type serializedKey struct {
 	// TPMVersion describes the version of the TPM which the key was generated
 	// on. deserializeKey() returns an error if it attempts to deserialize a key
 	// which is from a different TPM version to the currently opened TPM.
-	TPMVersion attest.TPMVersion
+	TPMVersion uint8
 
 	// Public represents the public key, in a TPM-specific format. This
 	// field is populated on all platforms and TPM versions.
@@ -84,6 +83,14 @@ func (k *serializedKey) Serialize() ([]byte, error) {
 	return json.Marshal(k)
 }
 
+type CreateConfig struct {
+	// Algorithm to be used, either RSA or ECDSA.
+	Algorithm string
+	// Size is used to specify the bit size of the key or elliptic curve. For
+	// example, '256' is used to specify curve P-256.
+	Size int
+}
+
 // Create creates a new TPM key without attesting it and returns a
 // serialized representation of it. The serialized format is compatible
 // with the `go-attestation` format. Most of the code in this package
@@ -97,8 +104,8 @@ func (k *serializedKey) Serialize() ([]byte, error) {
 // TODO: it might be an option to make some more things public in the
 // `go-attestation` package, or to change some of the logic of the
 // `NewKey` function that makes the AK optional.
-func Create(deviceName, keyName string) ([]byte, error) {
-	return create(deviceName, keyName)
+func Create(deviceName, keyName string, config CreateConfig) ([]byte, error) {
+	return create(deviceName, keyName, config)
 }
 
 var tpmEkTemplate *tpm2.Public

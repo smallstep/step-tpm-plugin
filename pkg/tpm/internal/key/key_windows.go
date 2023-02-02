@@ -5,11 +5,9 @@ package key
 
 import (
 	"fmt"
-
-	"github.com/google/go-attestation/attest"
 )
 
-func create(_, keyName string) ([]byte, error) {
+func create(_, keyName string, config CreateConfig) ([]byte, error) {
 
 	pcp, err := openPCP()
 	if err != nil {
@@ -17,9 +15,7 @@ func create(_, keyName string) ([]byte, error) {
 	}
 	defer pcp.Close()
 
-	config := &KeyConfig{Algorithm: RSA, Size: 2048} // TODO: additional parameters
-
-	hnd, pub, blob, err := pcp.NewKey(keyName, config)
+	hnd, pub, blob, err := pcp.NewKey(keyName, &KeyConfig{Algorithm: Algorithm(config.Algorithm), Size: config.Size})
 	if err != nil {
 		return nil, fmt.Errorf("pcp failed to mint application key: %v", err)
 	}
@@ -38,7 +34,7 @@ func create(_, keyName string) ([]byte, error) {
 
 	out := serializedKey{
 		Encoding:   keyEncodingOSManaged,
-		TPMVersion: attest.TPMVersion20,
+		TPMVersion: uint8(2), // hardcoded to not import github.com/google/go-attestation/attest
 		Name:       keyName,
 		Public:     pub,
 	}

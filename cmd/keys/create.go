@@ -33,6 +33,16 @@ func NewCreateKeyCommand() *cobra.Command {
 			Name:        "ak",
 			Description: "Name of the AK to attest new key with",
 		},
+		flag.Int{
+			Name:        "size",
+			Description: "Size of key to create",
+			Default:     2048,
+		},
+		flag.String{
+			Name:        "kty",
+			Description: "Type of key to create",
+			Default:     "RSA",
+		},
 	)
 
 	return cmd
@@ -43,7 +53,11 @@ func runCreateKey(ctx context.Context) error {
 		t      = tpm.FromContext(ctx)
 		name   = flag.FirstArg(ctx)
 		akName = flag.GetString(ctx, "ak")
+		size   = flag.GetInt(ctx, "size")
+		kty    = flag.GetString(ctx, "kty")
 	)
+
+	// TODO: validate size, combined with (valid) key algorithms
 
 	var (
 		key tpm.Key
@@ -52,12 +66,20 @@ func runCreateKey(ctx context.Context) error {
 
 	if akName == "" {
 		// create a key without attesting to an AK
-		if key, err = t.CreateKey(ctx, name); err != nil {
+		config := tpm.CreateKeyConfig{
+			Algorithm: kty,
+			Size:      size,
+		}
+		if key, err = t.CreateKey(ctx, name, config); err != nil {
 			return fmt.Errorf("creating key failed: %w", err)
 		}
 	} else {
 		// create a key attested by AK
-		if key, err = t.AttestKey(ctx, akName, name); err != nil {
+		config := tpm.AttestKeyConfig{
+			Algorithm: kty,
+			Size:      size,
+		}
+		if key, err = t.AttestKey(ctx, akName, name, config); err != nil {
 			return fmt.Errorf("creating attested key failed: %w", err)
 		}
 	}
