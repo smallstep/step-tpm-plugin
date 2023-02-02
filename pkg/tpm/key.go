@@ -21,6 +21,18 @@ type Key struct {
 	CreatedAt  time.Time
 }
 
+type AttestKeyConfig struct {
+	// Algorithm to be used, either RSA or ECDSA.
+	Algorithm attest.Algorithm
+	// Size is used to specify the bit size of the key or elliptic curve. For
+	// example, '256' is used to specify curve P-256.
+	Size int
+
+	QualifyingData []byte
+
+	// TODO(hs): add akName and key name to this struct?
+}
+
 func (t *TPM) CreateKey(ctx context.Context, name string) (Key, error) {
 
 	result := Key{}
@@ -69,7 +81,7 @@ func (t *TPM) CreateKey(ctx context.Context, name string) (Key, error) {
 // by go-attestation, so it might come down to replicating a lot of that logic. It could involve
 // checking multiple locks and/or pointers and instantiating when required. Opening and closing
 // on-demand is the simplest way and safe to do for now, though.
-func (t *TPM) AttestKey(ctx context.Context, akName, name string) (Key, error) {
+func (t *TPM) AttestKey(ctx context.Context, akName, name string, config AttestKeyConfig) (Key, error) {
 
 	result := Key{}
 	if err := t.Open(ctx); err != nil {
@@ -107,10 +119,9 @@ func (t *TPM) AttestKey(ctx context.Context, akName, name string) (Key, error) {
 	prefixedKeyName := fmt.Sprintf("app-%s", name)
 
 	keyConfig := &attest.KeyConfig{
-		// TODO: provide values (through flags) for algorithm, size, name, prefix, qualifying data?
-		Algorithm:      attest.RSA,
-		Size:           2048,
-		QualifyingData: nil, // TODO: needs value for ACME `device-attest-01`
+		Algorithm:      config.Algorithm,
+		Size:           config.Size,
+		QualifyingData: config.QualifyingData,
 		Name:           prefixedKeyName,
 	}
 
