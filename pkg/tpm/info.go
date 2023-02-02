@@ -5,13 +5,14 @@ import (
 	"fmt"
 
 	"github.com/google/go-attestation/attest"
+	"github.com/smallstep/step-tpm-plugin/pkg/tpm/manufacturer"
 )
 
 type Info struct {
 	Version              uint8 // TODO: alias the `attest` types instead?
 	Interface            uint8
 	VendorInfo           string
-	Manufacturer         uint32
+	Manufacturer         manufacturer.Manufacturer
 	FirmwareVersionMajor int
 	FirmwareVersionMinor int
 }
@@ -37,7 +38,7 @@ func (t *TPM) Info(ctx context.Context) (Info, error) {
 	result.FirmwareVersionMajor = info.FirmwareVersionMajor
 	result.FirmwareVersionMinor = info.FirmwareVersionMinor
 	result.Interface = uint8(info.Interface)
-	result.Manufacturer = uint32(info.Manufacturer)
+	result.Manufacturer = manufacturer.GetByID(uint32(info.Manufacturer))
 	result.VendorInfo = info.VendorInfo
 	result.Version = uint8(info.Version)
 
