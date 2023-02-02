@@ -18,7 +18,7 @@ type AK struct {
 	tpm *TPM
 }
 
-func (t *TPM) CreateAK(ctx context.Context, name string) (AK, error) { // TODO: return information about AK too?
+func (t *TPM) CreateAK(ctx context.Context, name string) (AK, error) {
 
 	result := AK{}
 	if err := t.Open(ctx); err != nil {
@@ -149,4 +149,61 @@ func (t *TPM) DeleteAK(ctx context.Context, name string) error {
 	}
 
 	return nil
+}
+
+// AttestationParameters returns information about the AK, typically used to
+// generate a credential activation challenge.
+func (ak AK) AttestationParameters(ctx context.Context) (params attest.AttestationParameters, err error) {
+
+	if err := ak.tpm.Open(ctx); err != nil {
+		return params, fmt.Errorf("failed opening TPM: %w", err)
+	}
+	defer ak.tpm.Close(ctx, false)
+
+	at, err := attest.OpenTPM(ak.tpm.attestConfig)
+	if err != nil {
+		return params, fmt.Errorf("failed opening TPM: %w", err)
+	}
+	defer at.Close()
+
+	loadedAK, err := at.LoadAK(ak.Data)
+	if err != nil {
+		return params, fmt.Errorf("failed loading AK: %w", err)
+	}
+	defer loadedAK.Close(at)
+
+	params = loadedAK.AttestationParameters()
+
+	return
+}
+
+// EncryptedCredential represents encrypted parameters which must be activated
+// against a key.
+type EncryptedCredential attest.EncryptedCredential
+
+// ActivateCredential decrypts the secret using the key to prove that the AK was
+// generated on the same TPM as the EK. This operation is synonymous with
+// TPM2_ActivateCredential.
+func (ak AK) ActivateCredential(ctx context.Context, in EncryptedCredential) (secret []byte, err error) {
+
+	if err := ak.tpm.Open(ctx); err != nil {
+		return secret, fmt.Errorf("failed opening TPM: %w", err)
+	}
+	defer ak.tpm.Close(ctx, false)
+
+	at, err := attest.OpenTPM(ak.tpm.attestConfig)
+	if err != nil {
+		return secret, fmt.Errorf("failed opening TPM: %w", err)
+	}
+	defer at.Close()
+
+	loadedAK, err := at.LoadAK(ak.Data)
+	if err != nil {
+		return secret, fmt.Errorf("failed loading AK: %w", err)
+	}
+	defer loadedAK.Close(at)
+
+	secret, err = loadedAK.ActivateCredential(at, attest.EncryptedCredential(in))
+
+	return
 }

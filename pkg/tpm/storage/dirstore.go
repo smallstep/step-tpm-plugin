@@ -53,7 +53,7 @@ func (s *Dirstore) ListKeys() ([]*Key, error) {
 	for k := range c {
 		data, err := s.store.Read(k)
 		if err != nil {
-			return nil, fmt.Errorf("error reading from store: %w", err)
+			return nil, fmt.Errorf("error reading key from store: %w", err)
 		}
 
 		sk := &serializedKey{}
@@ -83,7 +83,7 @@ func (s *Dirstore) GetKey(name string) (*Key, error) {
 
 	data, err := s.store.Read(key)
 	if err != nil {
-		return nil, fmt.Errorf("error reading from store: %w", err)
+		return nil, fmt.Errorf("error reading key from store: %w", err)
 	}
 
 	sk := &serializedKey{}
@@ -112,7 +112,7 @@ func (s *Dirstore) DeleteKey(name string) error {
 		return nil
 	}
 	if err := s.store.Erase(key); err != nil {
-		return fmt.Errorf("error deleting from disk: %w", err)
+		return fmt.Errorf("error deleting key from disk: %w", err)
 	}
 	return nil
 }
@@ -123,7 +123,7 @@ func (s *Dirstore) ListAKs() ([]*AK, error) {
 	for k := range c {
 		data, err := s.store.Read(k)
 		if err != nil {
-			return nil, fmt.Errorf("error reading from store: %w", err)
+			return nil, fmt.Errorf("error reading AK from store: %w", err)
 		}
 
 		sak := &serializedAK{}
@@ -153,12 +153,12 @@ func (s *Dirstore) GetAK(name string) (*AK, error) {
 
 	data, err := s.store.Read(key)
 	if err != nil {
-		return nil, fmt.Errorf("error reading from store: %w", err)
+		return nil, fmt.Errorf("error reading AK from store: %w", err)
 	}
 
 	sak := &serializedAK{}
 	if err := json.Unmarshal(data, sak); err != nil {
-		return nil, fmt.Errorf("error unmarshaling key: %w", err)
+		return nil, fmt.Errorf("error unmarshaling AK: %w", err)
 	}
 
 	return &AK{Name: sak.Name, Data: sak.Data, CreatedAt: sak.CreatedAt}, nil
@@ -170,7 +170,7 @@ func (s *Dirstore) AddAK(ak *AK) error {
 		return fmt.Errorf("error serializing AK: %w", err)
 	}
 	if err := s.store.WriteStream(keyForAK(ak.Name), bytes.NewBuffer(data), true); err != nil {
-		return fmt.Errorf("error writing to disk: %w", err)
+		return fmt.Errorf("error writing AK to disk: %w", err)
 	}
 	return nil
 }
@@ -181,7 +181,7 @@ func (s *Dirstore) DeleteAK(name string) error {
 		return nil
 	}
 	if err := s.store.Erase(key); err != nil {
-		return fmt.Errorf("error deleting from disk: %w", err)
+		return fmt.Errorf("error deleting AK from disk: %w", err)
 	}
 	return nil
 }
