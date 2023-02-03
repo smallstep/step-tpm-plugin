@@ -9,12 +9,20 @@ import (
 )
 
 type Info struct {
-	Version              uint8 // TODO: alias the `attest` types instead?
-	Interface            uint8
-	VendorInfo           string
-	Manufacturer         manufacturer.Manufacturer
-	FirmwareVersionMajor int
-	FirmwareVersionMinor int
+	Version         uint8 // TODO: alias the `attest` types instead?
+	Interface       uint8
+	VendorInfo      string
+	Manufacturer    manufacturer.Manufacturer
+	FirmwareVersion FirmwareVersion
+}
+
+type FirmwareVersion struct {
+	Major int
+	Minor int
+}
+
+func (fv FirmwareVersion) String() string {
+	return fmt.Sprintf("%d.%d", fv.Major, fv.Minor)
 }
 
 func (t *TPM) Info(ctx context.Context) (Info, error) {
@@ -35,10 +43,12 @@ func (t *TPM) Info(ctx context.Context) (Info, error) {
 		return result, fmt.Errorf("failed getting TPM info: %w", err)
 	}
 
-	result.FirmwareVersionMajor = info.FirmwareVersionMajor
-	result.FirmwareVersionMinor = info.FirmwareVersionMinor
+	result.FirmwareVersion = FirmwareVersion{
+		Major: info.FirmwareVersionMajor,
+		Minor: info.FirmwareVersionMinor,
+	}
 	result.Interface = uint8(info.Interface)
-	result.Manufacturer = manufacturer.GetByID(uint32(info.Manufacturer))
+	result.Manufacturer = manufacturer.GetByID(manufacturer.ID(info.Manufacturer))
 	result.VendorInfo = info.VendorInfo
 	result.Version = uint8(info.Version)
 

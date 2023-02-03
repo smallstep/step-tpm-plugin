@@ -56,7 +56,7 @@ func runInfo(ctx context.Context) error {
 		{"Interface", info.Interface},
 		{"Manufacturer", info.Manufacturer},
 		{"Vendor Info", info.VendorInfo},
-		{"Firmware Version", fmt.Sprintf("%d.%d", info.FirmwareVersionMajor, info.FirmwareVersionMinor)},
+		{"Firmware Version", info.FirmwareVersion},
 	})
 	t1.Render()
 
