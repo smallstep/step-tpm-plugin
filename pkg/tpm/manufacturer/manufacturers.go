@@ -13,10 +13,14 @@ var (
 	validChars          *regexp.Regexp
 )
 
+// ID models a TPM Manufacturer (or Vendor) ID.
+type ID uint32
+
+// Manufacturer models a TPM Manufacturer.
 type Manufacturer struct {
+	ID    ID
 	Name  string
 	ASCII string
-	ID    uint32
 	Hex   string
 }
 
@@ -24,7 +28,9 @@ func (m Manufacturer) String() string {
 	return fmt.Sprintf("%s (%s, %s, %d)", m.Name, m.ASCII, m.Hex, m.ID)
 }
 
-func GetByID(id uint32) Manufacturer {
+// GetByID returns a Manufacturer based on its Manufacturer ID
+// code.
+func GetByID(id ID) Manufacturer {
 	ascii, hex := getManufacturerEncodings(id)
 	name := getManufacturerNameByASCII(ascii)
 	return Manufacturer{
@@ -35,9 +41,9 @@ func GetByID(id uint32) Manufacturer {
 	}
 }
 
-func getManufacturerEncodings(id uint32) (ascii, hexa string) {
+func getManufacturerEncodings(id ID) (ascii, hexa string) {
 	b := [4]byte{}
-	binary.BigEndian.PutUint32(b[:], id)
+	binary.BigEndian.PutUint32(b[:], uint32(id))
 	ascii = string(b[:])
 	ascii = validChars.ReplaceAllString(ascii, "") // NOTE: strips \x00 characters (a.o)
 	hexa = strings.ToUpper(hex.EncodeToString(b[:]))

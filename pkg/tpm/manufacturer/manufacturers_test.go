@@ -7,7 +7,7 @@ import (
 func Test_getManufacturerEncodings(t *testing.T) {
 	tests := []struct {
 		name string
-		id   uint32
+		id   ID
 		want string
 	}{
 		{"infineon", 1229346816, "IFX"},
@@ -25,11 +25,11 @@ func Test_getManufacturerEncodings(t *testing.T) {
 func Test_GetByID(t *testing.T) {
 	tests := []struct {
 		name string
-		id   uint32
+		id   ID
 		want Manufacturer
 	}{
-		{"infineon", 1229346816, Manufacturer{"Infineon", "IFX", 1229346816, "49465800"}},
-		{"intel", 1229870147, Manufacturer{"Intel", "INTC", 1229870147, "494E5443"}},
+		{"infineon", 1229346816, Manufacturer{1229346816, "Infineon", "IFX", "49465800"}},
+		{"intel", 1229870147, Manufacturer{1229870147, "Intel", "INTC", "494E5443"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
