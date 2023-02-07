@@ -7,6 +7,7 @@ const (
 	FlagStorageFile      = "storage-file"
 	FlagStorageDirectory = "storage-directory"
 	FlagJSON             = "json"
+	FlagPEM              = "pem"
 )
 
 // Flag wraps the set of flags.
@@ -130,5 +131,13 @@ func StorageDirectory() String {
 		Shorthand:   "s",
 		Description: "Directory to store TPM keys",
 		Default:     "tpmkeys",
+	}
+}
+
+// PEM returns a "pem" bool flag.
+func PEM() Bool {
+	return Bool{
+		Name:        FlagPEM,
+		Description: "Output in PEM format",
 	}
 }

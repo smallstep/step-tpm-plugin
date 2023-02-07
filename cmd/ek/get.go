@@ -10,6 +10,7 @@ import (
 
 	"github.com/smallstep/step-tpm-plugin/internal/command"
 	"github.com/smallstep/step-tpm-plugin/internal/flag"
+	"github.com/smallstep/step-tpm-plugin/internal/render"
 	"github.com/smallstep/step-tpm-plugin/pkg/tpm"
 )
 
@@ -25,6 +26,11 @@ func NewGetEKCommand() *cobra.Command {
 	flag.Add(cmd,
 		flag.JSON(),
 		flag.Device(),
+		flag.PEM(),
+		flag.Bool{
+			Name:        "all",
+			Description: "Print all availables EKs",
+		},
 	)
 
 	return cmd
@@ -34,26 +40,53 @@ func runGetEK(ctx context.Context) error {
 	var (
 		t    = tpm.FromContext(ctx)
 		json = flag.GetBool(ctx, flag.FlagJSON)
+		pem  = flag.GetBool(ctx, flag.FlagPEM)
+		all  = flag.GetBool(ctx, "all")
 	)
-
-	_ = json
 
 	eks, err := t.GetEKs(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting EKs: %w", err)
 	}
 
-	t1 := table.NewWriter()
-	t1.SetOutputMirror(os.Stdout)
-	t1.AppendHeader(table.Row{"Public Key", "Certificate", "CertificateURL"})
-	for _, ek := range eks {
-		cert := "-"
-		if ek.Certificate != nil {
-			cert = "OK"
+	switch {
+	case pem:
+		if all {
+			for _, ek := range eks {
+				b, err := ek.PEM()
+				if err != nil {
+					return err
+				}
+				fmt.Println(b)
+			}
+			return nil
 		}
-		t1.AppendRow(table.Row{fmt.Sprintf("%T", ek.Public), cert, ek.CertificateURL})
+
+		b, err := eks[0].PEM()
+		if err != nil {
+			return err
+		}
+		fmt.Println(b)
+
+	case json:
+		if all {
+			return render.JSON(os.Stdout, eks)
+		}
+
+		return render.JSON(os.Stdout, eks[0])
+	default:
+		t1 := table.NewWriter()
+		t1.SetOutputMirror(os.Stdout)
+		t1.AppendHeader(table.Row{"Public Key", "Certificate", "CertificateURL"})
+		for _, ek := range eks {
+			cert := "-"
+			if ek.Certificate != nil {
+				cert = "OK"
+			}
+			t1.AppendRow(table.Row{fmt.Sprintf("%T", ek.Public), cert, ek.CertificateURL})
+		}
+		t1.Render()
 	}
-	t1.Render()
 
 	return nil
 }

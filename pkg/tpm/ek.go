@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -21,12 +22,43 @@ type EK struct {
 	CertificateURL string
 }
 
+func (ek EK) MarshalJSON() ([]byte, error) {
+	type out struct {
+		Type string `json:"type"`
+		PEM  string `json:"pem,omitempty"`
+		URL  string `json:"url,omitempty"`
+	}
+	var pemBytes []byte
+	if ek.Certificate != nil {
+		pemBytes = pem.EncodeToMemory(&pem.Block{
+			Type:  "CERTIFICATE",
+			Bytes: ek.Certificate.Raw,
+		})
+	}
+	o := out{
+		Type: fmt.Sprintf("%T", ek.Public), // TODO: proper string; on EK struct
+		PEM:  string(pemBytes),
+		URL:  ek.CertificateURL,
+	}
+	return json.Marshal(o)
+}
+
+func (ek EK) PEM() (string, error) {
+	if ek.Certificate == nil {
+		return "", fmt.Errorf("EK %T does not have a certificate", ek)
+	}
+	return string(pem.EncodeToMemory(&pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: ek.Certificate.Raw,
+	})), nil
+}
+
 type intelEKCertResponse struct {
 	Pubhash     string `json:"pubhash"`
 	Certificate string `json:"certificate"`
 }
 
-func (t *TPM) GetEKs(ctx context.Context) ([]*EK, error) {
+func (t *TPM) GetEKs(ctx context.Context) ([]EK, error) {
 
 	if err := t.Open(ctx); err != nil {
 		return nil, fmt.Errorf("failed opening TPM: %w", err)
@@ -44,14 +76,15 @@ func (t *TPM) GetEKs(ctx context.Context) ([]*EK, error) {
 		return nil, fmt.Errorf("failed getting EKs: %w", err)
 	}
 
-	result := make([]*EK, 0, len(eks))
+	result := make([]EK, 0, len(eks))
 	for _, ek := range eks {
 		ekCert := ek.Certificate
-		if certificateURL := ek.CertificateURL; ekCert == nil && certificateURL != "" {
+		ekURL := ek.CertificateURL
+		if ekCert == nil && ekURL != "" {
 			var u *url.URL
-			u, err = url.Parse(certificateURL)
+			u, err = url.Parse(ekURL)
 			if err != nil {
-				return nil, fmt.Errorf("error parsing EK certificate URL %q: %w", certificateURL, err)
+				return nil, fmt.Errorf("error parsing EK certificate URL %q: %w", ekURL, err)
 			}
 
 			// Ensure the URL is in the right format; for Intel TPMs, the path
@@ -69,18 +102,19 @@ func (t *TPM) GetEKs(ctx context.Context) ([]*EK, error) {
 
 			u, err = url.Parse(s)
 			if err != nil {
-				return nil, fmt.Errorf("error parsing Intel EK certificate URL: %w", err)
+				return nil, fmt.Errorf("error parsing reconstructed EK certificate URL: %w", err)
 			}
 
 			var r *http.Response
-			r, err = http.Get(u.String())
+			ekURL = u.String()
+			r, err = http.Get(ekURL)
 			if err != nil {
-				return nil, fmt.Errorf("error retrieving EK certificate from %q: %w", u.String(), err)
+				return nil, fmt.Errorf("error retrieving EK certificate from %q: %w", ekURL, err)
 			}
 			defer r.Body.Close()
 
 			if r.StatusCode != http.StatusOK {
-				return nil, fmt.Errorf("http request to %q failed with status %d", u.String(), r.StatusCode)
+				return nil, fmt.Errorf("http request to %q failed with status %d", ekURL, r.StatusCode)
 			}
 
 			var c intelEKCertResponse
@@ -99,10 +133,10 @@ func (t *TPM) GetEKs(ctx context.Context) ([]*EK, error) {
 			}
 		}
 
-		result = append(result, &EK{
+		result = append(result, EK{
 			Public:         ek.Public,
 			Certificate:    ekCert,
-			CertificateURL: ek.CertificateURL,
+			CertificateURL: ekURL,
 		})
 	}
 

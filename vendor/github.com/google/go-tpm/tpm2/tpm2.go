@@ -1723,11 +1723,6 @@ func SignWithSession(rw io.ReadWriter, sessionHandle, key tpmutil.Handle, passwo
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("cmd:", Cmd)
-	fmt.Println(fmt.Sprintf("handle: %#+v", key))
-	fmt.Println(fmt.Sprintf("handle &handle: %#+v", &key))
-	fmt.Println(fmt.Sprintf("session: %#+v", sessionHandle))
-	fmt.Println(fmt.Sprintf("validation: %#+v", validation))
 	resp, err := runCommand(rw, TagSessions, CmdSign, tpmutil.RawBytes(Cmd))
 	if err != nil {
 		return nil, err
@@ -1879,7 +1874,6 @@ func runCommand(rw io.ReadWriter, tag tpmutil.Tag, Cmd tpmutil.Command, in ...in
 		return nil, err
 	}
 	if code != tpmutil.RCSuccess {
-		fmt.Println(fmt.Sprintf("code: %#+v", code))
 		return nil, decodeResponse(code)
 	}
 	return resp, decodeResponse(code)
