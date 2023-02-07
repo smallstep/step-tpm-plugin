@@ -1,0 +1,41 @@
+run:
+  modules-download-mode: vendor
+  tests: true
+  timeout: 1m
+
+linters:
+  enable-all: true
+  disable:
+    - deadcode # deprecated
+    - exhaustivestruct
+    - exhaustruct
+    - forbidigo # we need to use fmt.Print*()
+    - golint # deprecated
+    - gomnd
+    - ifshort # deprecated
+    - interfacer # deprecated
+    - maligned # deprecated
+    - nolintlint
+    - nonamedreturns
+    - nosnakecase # deprecated
+    - paralleltest # tests only take 2.5s to run. no need to parallelize
+    - scopelint # deprecated
+    - structcheck # deprecated
+    - testpackage
+    - varcheck # deprecated
+    - varnamelen # makes bad suggestions
+    - wsl
+
+linters-settings:
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - opinionated
+      - performance
+      - style
+    disabled-checks:
+      - whyNoLint
+  gocyclo:
+    min-complexity: 10
+  gofumpt:
+    extra-rules: true

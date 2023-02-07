@@ -63,7 +63,8 @@ func runSignCSR(ctx context.Context) error {
 	}
 
 	// TODO: fix the SKAE. It fails with "creating SKAE extension failed: creating SKAE extension failed: asn1: structure error: invalid object identifier"
-	skaeExtension, err := skae.CreateSubjectKeyAttestationEvidenceExtension(nil, params)
+	shouldEncrypt := false
+	skaeExtension, err := skae.CreateSubjectKeyAttestationEvidenceExtension(nil, params, shouldEncrypt)
 	if err != nil {
 		return fmt.Errorf("creating SKAE extension failed: %w", err)
 	}
