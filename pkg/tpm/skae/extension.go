@@ -45,9 +45,9 @@ func CreateSubjectKeyAttestationEvidenceExtension(akCert *x509.Certificate, para
 		},
 		TPMIdentityCredAccessInfo: asn1TPMIdentityCredentialAccessInfo{ // TODO: this should contain information from the AIK/AK cert. See x509.go on how to handle these values.
 			AuthorityInfoAccess: createAIA(akCert),
-			IssuerSerial: asn1IssuerSerial{
-				Issuer: asn1.RawValue{FullBytes: asn1Issuer},
-				Serial: akCert.SerialNumber,
+			IssuerSerial: issuerAndSerial{
+				IssuerName:   asn1.RawValue{FullBytes: asn1Issuer},
+				SerialNumber: akCert.SerialNumber,
 			},
 		},
 	}
@@ -57,26 +57,42 @@ func CreateSubjectKeyAttestationEvidenceExtension(akCert *x509.Certificate, para
 		return pkix.Extension{}, fmt.Errorf("error marshaling attestation evidence: %w", err)
 	}
 
-	// choiceAEB, err := asn1.Marshal(asn1.RawValue{
-	// 		Class:      asn1.ClassContextSpecific, // or asn1.ClassContextSpecific
-	// 		IsCompound: true,                      // as CHOICE it is a Constructed type and not Primitive type
-	// 		Tag:        asn1.TagInteger,           // two in this case?
-	// 		FullBytes:  aeb,                       // The serialized inner sequence of bytes
-	// 	})
-
 	q.Q(base64.StdEncoding.EncodeToString(aeb))
 
 	if !shouldEncrypt {
 		//skaeExtension.KeyAttestationEvidence.AttestEvidence = attestationEvidence
 		skaeExtension.KeyAttestationEvidence.Evidence = asn1.RawValue{
-			Class:      asn1.ClassContextSpecific, // or asn1.ClassContextSpecific
-			IsCompound: true,                      // as CHOICE it is a Constructed type and not Primitive type
-			Tag:        0,                         // CHOICE "0"
-			Bytes:      aeb,                       // The serialized inner sequence of bytes, excl tag and length (?)
-			//FullBytes:  aeb,
+			Class:      asn1.ClassContextSpecific,
+			IsCompound: true,
+			Tag:        0, // CHOICE "0"
+			Bytes:      aeb,
 		}
 	} else {
-		// TODO: encrypt the AttestEvidence to recipient; set it as the EnvelopedAttestEvidence
+		// TODO: encrypt the AttestEvidence to (right) recipient; set it as the EnvelopedAttestEvidence
+		encryptedAEB := aeb
+
+		eae := asn1EnvelopedAttestationEvidence{
+			RecipientInfos: []recipientInfo{}, // TODO: fill recipient(s)
+			EncryptedAttestInfo: asn1EncryptedAttestationInfo{
+				EncryptionAlgorithm: pkix.AlgorithmIdentifier{
+					Algorithm: nil, // TODO: select and fill
+				},
+				EncryptedAttestEvidence: encryptedAEB,
+			},
+		}
+
+		eaeBytes, err := asn1.Marshal(eae)
+		if err != nil {
+			return pkix.Extension{}, errors.New("error marshaling EnvelopedAttestationEvidence")
+		}
+
+		skaeExtension.KeyAttestationEvidence.Evidence = asn1.RawValue{
+			Class:      asn1.ClassContextSpecific,
+			IsCompound: true,
+			Tag:        1, // CHOICE "1"
+			Bytes:      eaeBytes,
+		}
+
 		return pkix.Extension{}, errors.New("encrypting the AttestEvidence is not yet supported")
 	}
 
@@ -152,7 +168,7 @@ type asn1TPMCertifyInfo struct {
 
 type asn1TPMIdentityCredentialAccessInfo struct {
 	AuthorityInfoAccess []asn1AuthorityInfoAccessSyntax
-	IssuerSerial        asn1IssuerSerial
+	IssuerSerial        issuerAndSerial
 }
 
 type asn1AuthorityInfoAccessSyntax struct {
@@ -160,14 +176,21 @@ type asn1AuthorityInfoAccessSyntax struct {
 	Location asn1.RawValue
 }
 
-type asn1IssuerSerial struct {
-	Issuer asn1.RawValue
-	Serial *big.Int
+type issuerAndSerial struct {
+	IssuerName   asn1.RawValue
+	SerialNumber *big.Int
 }
 
 type asn1EnvelopedAttestationEvidence struct {
-	//RecipientInfos
-	//EncryptedAttestInfo asn1EncryptedAttestationInfo
+	RecipientInfos      []recipientInfo `asn1:"set"`
+	EncryptedAttestInfo asn1EncryptedAttestationInfo
+}
+
+type recipientInfo struct {
+	Version                int
+	IssuerAndSerialNumber  issuerAndSerial
+	KeyEncryptionAlgorithm pkix.AlgorithmIdentifier
+	EncryptedKey           []byte
 }
 
 type asn1EncryptedAttestationInfo struct {

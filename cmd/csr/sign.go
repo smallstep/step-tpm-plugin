@@ -7,14 +7,15 @@ import (
 	"crypto/x509/pkix"
 	"encoding/base64"
 	"fmt"
+	"math/big"
 
+	"github.com/google/go-attestation/attest"
 	"github.com/spf13/cobra"
-
-	"github.com/smallstep/step-tpm-plugin/pkg/tpm"
-	"github.com/smallstep/step-tpm-plugin/pkg/tpm/skae"
 
 	"github.com/smallstep/step-tpm-plugin/internal/command"
 	"github.com/smallstep/step-tpm-plugin/internal/flag"
+	"github.com/smallstep/step-tpm-plugin/pkg/tpm"
+	"github.com/smallstep/step-tpm-plugin/pkg/tpm/skae"
 )
 
 func NewSignCSRCommand() *cobra.Command {
@@ -55,30 +56,68 @@ func runSignCSR(ctx context.Context) error {
 		return fmt.Errorf("getting signer for key failed: %w", err)
 	}
 
-	fmt.Println(signer.Public())
-
 	params, err := key.CertificationParameters(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting key certification parameters: %w", err)
 	}
 
-	// TODO: fix the SKAE. It fails with "creating SKAE extension failed: creating SKAE extension failed: asn1: structure error: invalid object identifier"
+	if key.AttestedBy == "" {
+		return fmt.Errorf("key %q was not attested by an AK", key.Name)
+	}
+
+	ak, err := t.GetAK(ctx, key.AttestedBy)
+	if err != nil {
+		return fmt.Errorf("getting key failed: %w", err)
+	}
+
+	_ = ak
+
+	// TODO: the AK cert should belong to an actual AK and thus be supplied
+	// as a parameter, or automatically retrieved from the AK.
+	fakeAK := &x509.Certificate{
+		Issuer: pkix.Name{
+			CommonName: "Test AK",
+		},
+		SerialNumber: big.NewInt(12345678),
+		OCSPServer: []string{
+			"https://www.example.com/ocsp/1",
+			"https://www.example.com/ocsp/2",
+		},
+		IssuingCertificateURL: []string{
+			"https://www.example.com/issuing/cert1",
+		},
+	}
+
+	// retrieve AK attestation params and verify the key was attested by the AK
+	attestParams, err := ak.AttestationParameters(ctx)
+	if err != nil {
+		return fmt.Errorf("getting Ak attestation parameters failed: %w", err)
+	}
+
+	akPub, err := attest.ParseAKPublic(attest.TPMVersion20, attestParams.Public)
+	if err != nil {
+		return fmt.Errorf("failed to parse AK public: %w", err)
+	}
+
+	if err := params.Verify(attest.VerifyOpts{Public: akPub.Public, Hash: akPub.Hash}); err != nil {
+		return fmt.Errorf("error verifying AK attested key: %w", err)
+	}
+
+	// TODO: determine whether or not to encrypt the evidence
 	shouldEncrypt := false
-	skaeExtension, err := skae.CreateSubjectKeyAttestationEvidenceExtension(nil, params, shouldEncrypt)
+	skaeExtension, err := skae.CreateSubjectKeyAttestationEvidenceExtension(fakeAK, params, shouldEncrypt)
 	if err != nil {
 		return fmt.Errorf("creating SKAE extension failed: %w", err)
 	}
-
-	_ = skaeExtension
 
 	// TODO: alter existing CSR instead; take that as argument and/or move this to library?
 	template := &x509.CertificateRequest{
 		Subject: pkix.Name{
 			CommonName: "test cn",
 		},
-		// ExtraExtensions: []pkix.Extension{
-		// 	skaeExtension,
-		// },
+		ExtraExtensions: []pkix.Extension{
+			skaeExtension,
+		},
 	}
 
 	csrBytes, err := x509.CreateCertificateRequest(rand.Reader, template, signer)
@@ -90,8 +129,6 @@ func runSignCSR(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("error parsing certificate request: %w", err)
 	}
-
-	fmt.Printf("%#+v\n", csr)
 
 	fmt.Println(base64.StdEncoding.EncodeToString(csr.Raw))
 
