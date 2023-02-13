@@ -14,8 +14,8 @@ import (
 
 	"github.com/smallstep/step-tpm-plugin/internal/command"
 	"github.com/smallstep/step-tpm-plugin/internal/flag"
-	"github.com/smallstep/step-tpm-plugin/pkg/tpm"
-	"github.com/smallstep/step-tpm-plugin/pkg/tpm/skae"
+	"go.step.sm/crypto/tpm"
+	"go.step.sm/crypto/tpm/skae"
 )
 
 func NewSignCSRCommand() *cobra.Command {
@@ -91,7 +91,7 @@ func runSignCSR(ctx context.Context) error {
 	// retrieve AK attestation params and verify the key was attested by the AK
 	attestParams, err := ak.AttestationParameters(ctx)
 	if err != nil {
-		return fmt.Errorf("getting Ak attestation parameters failed: %w", err)
+		return fmt.Errorf("getting AK attestation parameters failed: %w", err)
 	}
 
 	akPub, err := attest.ParseAKPublic(attest.TPMVersion20, attestParams.Public)

@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/smallstep/step-tpm-plugin/internal/flag"
-	"github.com/smallstep/step-tpm-plugin/pkg/tpm"
-	"github.com/smallstep/step-tpm-plugin/pkg/tpm/storage"
+	"go.step.sm/crypto/tpm"
+	"go.step.sm/crypto/tpm/storage"
 )
 
 // fallbackTPMStore ensures a NOOP TPMStore is available in the context.

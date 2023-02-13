@@ -10,7 +10,7 @@ import (
 
 	"github.com/smallstep/step-tpm-plugin/internal/command"
 	"github.com/smallstep/step-tpm-plugin/internal/flag"
-	"github.com/smallstep/step-tpm-plugin/pkg/tpm"
+	"go.step.sm/crypto/tpm"
 )
 
 func NewCreateAKCommand() *cobra.Command {
