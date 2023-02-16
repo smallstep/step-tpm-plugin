@@ -9,6 +9,7 @@ import (
 
 	"github.com/smallstep/step-tpm-plugin/internal/command"
 	"github.com/smallstep/step-tpm-plugin/internal/flag"
+	"github.com/smallstep/step-tpm-plugin/internal/render"
 	"go.step.sm/crypto/tpm"
 )
 
@@ -35,7 +36,8 @@ func NewListAKCommand() *cobra.Command {
 
 func runListAK(ctx context.Context) error {
 	var (
-		t = tpm.FromContext(ctx)
+		t    = tpm.FromContext(ctx)
+		json = flag.GetBool(ctx, flag.FlagJSON)
 	)
 
 	aks, err := t.ListAKs(ctx)
@@ -43,48 +45,17 @@ func runListAK(ctx context.Context) error {
 		return err
 	}
 
+	if json {
+		return render.JSON(os.Stdout, aks)
+	}
+
 	t1 := table.NewWriter()
 	t1.SetOutputMirror(os.Stdout)
 	t1.AppendHeader(table.Row{"Name", "Data length"})
 	for _, ak := range aks {
-		t1.AppendRow(table.Row{ak.Name, len(ak.Data)})
+		t1.AppendRow(table.Row{ak.Name(), len(ak.Data())})
 	}
 	t1.Render()
-
-	// cfg := config.FromContext(ctx)
-	// client := client.FromContext(ctx)
-
-	// var apps []api.App
-	// if apps, err = client.API().GetApps(ctx, nil); err != nil {
-	// 	return
-	// }
-
-	// out := iostreams.FromContext(ctx).Out
-	// if cfg.JSONOutput {
-	// 	_ = render.JSON(out, apps)
-
-	// 	return
-	// }
-
-	// rows := make([][]string, 0, len(apps))
-	// for _, app := range apps {
-	// 	latestDeploy := ""
-	// 	if app.Deployed && app.CurrentRelease != nil {
-	// 		latestDeploy = format.RelativeTime(app.CurrentRelease.CreatedAt)
-	// 	}
-
-	// 	rows = append(rows, []string{
-	// 		app.Name,
-	// 		app.Organization.Slug,
-	// 		app.Status,
-	// 		app.PlatformVersion,
-	// 		latestDeploy,
-	// 	})
-	// }
-
-	// _ = render.Table(out, "", rows, "Name", "Owner", "Status", "Platform", "Latest Deploy")
-
-	// return
 
 	return nil
 }

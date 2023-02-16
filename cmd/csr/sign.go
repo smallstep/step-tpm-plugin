@@ -61,11 +61,11 @@ func runSignCSR(ctx context.Context) error {
 		return fmt.Errorf("error getting key certification parameters: %w", err)
 	}
 
-	if key.AttestedBy == "" {
-		return fmt.Errorf("key %q was not attested by an AK", key.Name)
+	if !key.WasAttested() {
+		return fmt.Errorf("key %q was not attested by an AK", key.Name())
 	}
 
-	ak, err := t.GetAK(ctx, key.AttestedBy)
+	ak, err := t.GetAK(ctx, key.AttestedBy())
 	if err != nil {
 		return fmt.Errorf("getting key failed: %w", err)
 	}

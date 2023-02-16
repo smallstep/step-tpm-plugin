@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -11,6 +12,7 @@ import (
 
 	"github.com/smallstep/step-tpm-plugin/internal/command"
 	"github.com/smallstep/step-tpm-plugin/internal/flag"
+	"github.com/smallstep/step-tpm-plugin/internal/render"
 )
 
 func NewGetAKCommand() *cobra.Command {
@@ -41,20 +43,16 @@ func runGetAK(ctx context.Context) error {
 		name = flag.FirstArg(ctx)
 	)
 
-	_ = json
-
 	ak, err := t.GetAK(ctx, name)
 	if err != nil {
 		return fmt.Errorf("getting AK failed: %w", err)
 	}
 
-	// t1 := table.NewWriter()
-	// t1.SetOutputMirror(os.Stdout)
-	// t1.AppendHeader(table.Row{"Name", "Data"})
-	// t1.AppendRow(table.Row{ak.Name, len(ak.Data)})
-	// t1.Render()
+	if json {
+		return render.JSON(os.Stdout, ak)
+	}
 
-	fmt.Println(base64.StdEncoding.EncodeToString(ak.Data))
+	fmt.Println(base64.StdEncoding.EncodeToString(ak.Data()))
 
 	return nil
 }

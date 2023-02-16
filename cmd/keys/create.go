@@ -10,6 +10,7 @@ import (
 
 	"github.com/smallstep/step-tpm-plugin/internal/command"
 	"github.com/smallstep/step-tpm-plugin/internal/flag"
+	"github.com/smallstep/step-tpm-plugin/internal/render"
 	"go.step.sm/crypto/tpm"
 )
 
@@ -29,10 +30,7 @@ func NewCreateKeyCommand() *cobra.Command {
 		flag.StorageDirectory(),
 		flag.JSON(),
 		flag.Device(),
-		flag.String{
-			Name:        "ak",
-			Description: "Name of the AK to attest new key with",
-		},
+		flag.AK(),
 		flag.Int{
 			Name:        "size",
 			Description: "Size of key to create",
@@ -52,7 +50,8 @@ func runCreateKey(ctx context.Context) error {
 	var (
 		t      = tpm.FromContext(ctx)
 		name   = flag.FirstArg(ctx)
-		akName = flag.GetString(ctx, "ak")
+		json   = flag.GetBool(ctx, flag.FlagJSON)
+		akName = flag.GetString(ctx, flag.FlagAK)
 		size   = flag.GetInt(ctx, "size")
 		kty    = flag.GetString(ctx, "kty")
 	)
@@ -60,7 +59,7 @@ func runCreateKey(ctx context.Context) error {
 	// TODO: validate size, combined with (valid) key algorithms
 
 	var (
-		key tpm.Key
+		key *tpm.Key
 		err error
 	)
 
@@ -84,10 +83,14 @@ func runCreateKey(ctx context.Context) error {
 		}
 	}
 
+	if json {
+		return render.JSON(os.Stdout, key)
+	}
+
 	t1 := table.NewWriter()
 	t1.SetOutputMirror(os.Stdout)
 	t1.AppendHeader(table.Row{"Name", "Data"})
-	t1.AppendRow(table.Row{key.Name, len(key.Data)})
+	t1.AppendRow(table.Row{key.Name(), len(key.Data())})
 	t1.Render()
 
 	return nil

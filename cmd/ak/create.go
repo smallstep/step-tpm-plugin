@@ -10,6 +10,7 @@ import (
 
 	"github.com/smallstep/step-tpm-plugin/internal/command"
 	"github.com/smallstep/step-tpm-plugin/internal/flag"
+	"github.com/smallstep/step-tpm-plugin/internal/render"
 	"go.step.sm/crypto/tpm"
 )
 
@@ -38,6 +39,7 @@ func runCreateAK(ctx context.Context) error {
 	var (
 		t    = tpm.FromContext(ctx)
 		name = flag.FirstArg(ctx)
+		json = flag.GetBool(ctx, flag.FlagJSON)
 	)
 
 	ak, err := t.CreateAK(ctx, name)
@@ -45,10 +47,14 @@ func runCreateAK(ctx context.Context) error {
 		return fmt.Errorf("creating AK failed: %w", err)
 	}
 
+	if json {
+		return render.JSON(os.Stdout, ak)
+	}
+
 	t1 := table.NewWriter()
 	t1.SetOutputMirror(os.Stdout)
 	t1.AppendHeader(table.Row{"Name", "Data"})
-	t1.AppendRow(table.Row{ak.Name, len(ak.Data)})
+	t1.AppendRow(table.Row{ak.Name(), len(ak.Data())})
 	t1.Render()
 
 	return nil

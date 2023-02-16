@@ -10,6 +10,7 @@ import (
 
 	"github.com/smallstep/step-tpm-plugin/internal/command"
 	"github.com/smallstep/step-tpm-plugin/internal/flag"
+	"github.com/smallstep/step-tpm-plugin/internal/render"
 	"go.step.sm/crypto/tpm"
 )
 
@@ -47,7 +48,9 @@ func runInfo(ctx context.Context) error {
 	// TODO(hs): output additional data with --verbose?
 	// TODO(hs): add basic EK info to output?
 
-	_ = json // TODO(hs): actual JSON output
+	if json {
+		return render.JSON(os.Stdout, info)
+	}
 
 	t1 := table.NewWriter()
 	t1.SetOutputMirror(os.Stdout)

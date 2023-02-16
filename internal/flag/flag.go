@@ -8,6 +8,7 @@ const (
 	FlagStorageDirectory = "storage-directory"
 	FlagJSON             = "json"
 	FlagPEM              = "pem"
+	FlagAK               = "ak"
 )
 
 // Flag wraps the set of flags.
@@ -139,5 +140,13 @@ func PEM() Bool {
 	return Bool{
 		Name:        FlagPEM,
 		Description: "Output in PEM format",
+	}
+}
+
+// AK returns an "ak" string flag.
+func AK() String {
+	return String{
+		Name:        FlagAK,
+		Description: "Name of the AK to attest new key with",
 	}
 }

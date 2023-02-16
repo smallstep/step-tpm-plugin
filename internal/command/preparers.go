@@ -21,9 +21,10 @@ func ensureCloseWithPersist(ctx context.Context) (context.Context, error) {
 	if err := t.Open(ctx); err != nil { // needs to be opened first to lock the mutex
 		return ctx, fmt.Errorf("failed opening TPM: %w", err)
 	}
-	if err := t.Close(ctx, true); err != nil {
-		return ctx, fmt.Errorf("failed closing TPM: %w", err)
-	}
+	t.Close(ctx)
+	// if err := t.Close(ctx); err != nil {
+	// 	return ctx, fmt.Errorf("failed closing TPM: %w", err)
+	// }
 	return ctx, nil
 }
 

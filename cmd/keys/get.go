@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -11,6 +12,7 @@ import (
 
 	"github.com/smallstep/step-tpm-plugin/internal/command"
 	"github.com/smallstep/step-tpm-plugin/internal/flag"
+	"github.com/smallstep/step-tpm-plugin/internal/render"
 )
 
 func NewGetKeyCommand() *cobra.Command {
@@ -41,20 +43,16 @@ func runGetKey(ctx context.Context) error {
 		name = flag.FirstArg(ctx)
 	)
 
-	_ = json
-
 	key, err := t.GetKey(ctx, name)
 	if err != nil {
 		return fmt.Errorf("getting key failed: %w", err)
 	}
 
-	// t1 := table.NewWriter()
-	// t1.SetOutputMirror(os.Stdout)
-	// t1.AppendHeader(table.Row{"Name", "Data"})
-	// t1.AppendRow(table.Row{key.Name, len(key.Data)})
-	// t1.Render()
+	if json {
+		return render.JSON(os.Stdout, key)
+	}
 
-	fmt.Println(base64.StdEncoding.EncodeToString(key.Data))
+	fmt.Println(base64.StdEncoding.EncodeToString(key.Data()))
 
 	return nil
 }
