@@ -2,7 +2,8 @@ package tpm
 
 import (
 	"context"
-	"crypto/rand"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -11,55 +12,77 @@ import (
 	"go.step.sm/crypto/tpm/storage"
 )
 
+// AK models a TPM 2.0 Attestation Key.
 type AK struct {
-	Name      string
-	Data      []byte
-	CreatedAt time.Time
-
-	tpm *TPM
+	name      string
+	data      []byte
+	createdAt time.Time
+	tpm       *TPM
 }
 
-func (t *TPM) CreateAK(ctx context.Context, name string) (AK, error) {
-	result := AK{}
-	if err := t.Open(ctx); err != nil {
-		return result, fmt.Errorf("failed opening TPM: %w", err)
+// Name returns the AK name.
+func (ak *AK) Name() string {
+	return ak.name
+}
+
+// Data returns the AK data blob.
+func (ak *AK) Data() []byte {
+	return ak.data
+}
+
+// CreatedAt returns the creation time of the AK.
+func (ak *AK) CreatedAt() time.Time {
+	return ak.createdAt
+}
+
+func (ak *AK) MarshalJSON() ([]byte, error) {
+	type out struct {
+		Name      string    `json:"name"`
+		Data      []byte    `json:"data"`
+		CreatedAt time.Time `json:"createdAt"`
 	}
-	defer t.Close(ctx, false)
+	o := out{
+		Name:      ak.name,
+		Data:      ak.data,
+		CreatedAt: ak.createdAt,
+	}
+	return json.Marshal(o)
+}
+
+func (t *TPM) CreateAK(ctx context.Context, name string) (*AK, error) {
+	if err := t.Open(ctx); err != nil {
+		return nil, fmt.Errorf("failed opening TPM: %w", err)
+	}
+	defer t.Close(ctx)
 
 	at, err := attest.OpenTPM(t.attestConfig)
 	if err != nil {
-		return result, fmt.Errorf("failed opening TPM: %w", err)
+		return nil, fmt.Errorf("failed opening TPM: %w", err)
 	}
 	defer at.Close()
 
 	now := time.Now()
 
-	if name == "" {
-		// TODO: decouple the TPM key name from the name recorded in the storage? This might
-		// make it easier to work with the key names as a user; the TPM key name would be abstracted
-		// away. The key name in the storage can be different from the key stored with the key (which,
-		// to be far, isn't even used on Linux TPMs)
-		nameHex := make([]byte, 5)
-		if n, err := rand.Read(nameHex); err != nil || n != len(nameHex) {
-			return result, fmt.Errorf("rand.Read() failed with %d/%d bytes read and error: %w", n, len(nameHex), err)
-		}
-		name = fmt.Sprintf("%x", nameHex)
+	if name, err = processName(name); err != nil {
+		return nil, err
 	}
 
-	prefixedName := fmt.Sprintf("ak-%s", name)
+	if _, err := t.store.GetAK(name); err == nil {
+		return nil, fmt.Errorf("failed creating AK %q: %w", name, ErrExists)
+	}
 
 	akConfig := attest.AKConfig{
-		Name: prefixedName,
+		Name: prefixAK(name),
 	}
 	ak, err := at.NewAK(&akConfig)
 	if err != nil {
-		return result, err
+		return nil, fmt.Errorf("failed creating new AK %q: %w", name, err)
 	}
 	defer ak.Close(at)
 
 	data, err := ak.Marshal()
 	if err != nil {
-		return result, err
+		return nil, fmt.Errorf("failed marshaling AK %q: %w", name, err)
 	}
 
 	storedAK := &storage.AK{
@@ -69,45 +92,47 @@ func (t *TPM) CreateAK(ctx context.Context, name string) (AK, error) {
 	}
 
 	if err := t.store.AddAK(storedAK); err != nil {
-		return result, err
+		return nil, fmt.Errorf("failed adding AK %q: %w", name, err)
 	}
 
 	if err := t.store.Persist(); err != nil {
-		return result, err
+		return nil, fmt.Errorf("failed persisting AK %q: %w", name, err)
 	}
 
-	return AK{Name: storedAK.Name, Data: storedAK.Data, CreatedAt: now, tpm: t}, nil
+	return &AK{name: storedAK.Name, data: storedAK.Data, createdAt: now, tpm: t}, nil
 }
 
-func (t *TPM) GetAK(ctx context.Context, name string) (AK, error) {
-	result := AK{}
-	if err := t.Open(ctx); err != nil {
-		return result, fmt.Errorf("failed opening TPM: %w", err)
-	}
-	defer t.Close(ctx, false)
-
-	ak, err := t.store.GetAK(name)
-	if err != nil {
-		return result, fmt.Errorf("error getting AK %q: %w", name, err)
-	}
-
-	return AK{Name: ak.Name, Data: ak.Data, CreatedAt: ak.CreatedAt, tpm: t}, nil
-}
-
-func (t *TPM) ListAKs(ctx context.Context) ([]AK, error) {
+func (t *TPM) GetAK(ctx context.Context, name string) (*AK, error) {
 	if err := t.Open(ctx); err != nil {
 		return nil, fmt.Errorf("failed opening TPM: %w", err)
 	}
-	defer t.Close(ctx, false)
+	defer t.Close(ctx)
+
+	ak, err := t.store.GetAK(name)
+	if err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("failed getting AK %q: %w", name, err)
+	}
+
+	return &AK{name: ak.Name, data: ak.Data, createdAt: ak.CreatedAt, tpm: t}, nil
+}
+
+func (t *TPM) ListAKs(ctx context.Context) ([]*AK, error) {
+	if err := t.Open(ctx); err != nil {
+		return nil, fmt.Errorf("failed opening TPM: %w", err)
+	}
+	defer t.Close(ctx)
 
 	aks, err := t.store.ListAKs()
 	if err != nil {
-		return nil, fmt.Errorf("error listing AKs: %w", err)
+		return nil, fmt.Errorf("failed listing AKs: %w", err)
 	}
 
-	result := make([]AK, 0, len(aks))
+	result := make([]*AK, 0, len(aks))
 	for _, ak := range aks {
-		result = append(result, AK{Name: ak.Name, Data: ak.Data, CreatedAt: ak.CreatedAt, tpm: t})
+		result = append(result, &AK{name: ak.Name, data: ak.Data, createdAt: ak.CreatedAt, tpm: t})
 	}
 
 	return result, nil
@@ -117,7 +142,7 @@ func (t *TPM) DeleteAK(ctx context.Context, name string) error {
 	if err := t.Open(ctx); err != nil {
 		return fmt.Errorf("failed opening TPM: %w", err)
 	}
-	defer t.Close(ctx, false)
+	defer t.Close(ctx)
 
 	at, err := attest.OpenTPM(t.attestConfig)
 	if err != nil {
@@ -127,22 +152,35 @@ func (t *TPM) DeleteAK(ctx context.Context, name string) error {
 
 	ak, err := t.store.GetAK(name)
 	if err != nil {
-		return fmt.Errorf("failed loading AK: %w", err)
+		if errors.Is(err, storage.ErrNotFound) {
+			return fmt.Errorf("failed loading AK %q: %w", name, ErrNotFound)
+		}
+		return fmt.Errorf("failed loading AK %q: %w", name, err)
 	}
 
-	// TODO: catch case when named AK isn't found; tpm.GetAK returns nil in that case,
-	// resulting in a nil pointer. Need an ErrNotFound like type from the storage layer and appropriate
-	// handling?
+	// prevent deleting the AK if the TPM (storage) contains keys that
+	// were attested by it. While keys would still work if the AK were
+	// deleted, some functionalities would no longer work. The AK can
+	// only be deleted if all keys attested by it are deleted first.
+	keys, err := t.GetKeysAttestedBy(internalCall(ctx), name)
+	if err != nil {
+		return fmt.Errorf("failed getting keys attested by AK %q: %w", name, err)
+	}
+
+	if len(keys) > 0 {
+		return fmt.Errorf("cannot delete AK %q before deleting keys that were attested by it", name)
+	}
+
 	if err := at.DeleteKey(ak.Data); err != nil {
-		return fmt.Errorf("failed deleting AK: %w", err)
+		return fmt.Errorf("failed deleting AK %q: %w", name, err)
 	}
 
 	if err := t.store.DeleteAK(name); err != nil {
-		return fmt.Errorf("error deleting AK from storage: %w", err)
+		return fmt.Errorf("failed deleting AK %q from storage: %w", name, err)
 	}
 
 	if err := t.store.Persist(); err != nil {
-		return fmt.Errorf("error persisting storage: %w", err)
+		return fmt.Errorf("failed persisting storage: %w", err)
 	}
 
 	return nil
@@ -150,11 +188,11 @@ func (t *TPM) DeleteAK(ctx context.Context, name string) error {
 
 // AttestationParameters returns information about the AK, typically used to
 // generate a credential activation challenge.
-func (ak AK) AttestationParameters(ctx context.Context) (params attest.AttestationParameters, err error) {
+func (ak *AK) AttestationParameters(ctx context.Context) (params attest.AttestationParameters, err error) {
 	if err := ak.tpm.Open(ctx); err != nil {
 		return params, fmt.Errorf("failed opening TPM: %w", err)
 	}
-	defer ak.tpm.Close(ctx, false)
+	defer ak.tpm.Close(ctx)
 
 	at, err := attest.OpenTPM(ak.tpm.attestConfig)
 	if err != nil {
@@ -162,9 +200,9 @@ func (ak AK) AttestationParameters(ctx context.Context) (params attest.Attestati
 	}
 	defer at.Close()
 
-	loadedAK, err := at.LoadAK(ak.Data)
+	loadedAK, err := at.LoadAK(ak.data)
 	if err != nil {
-		return params, fmt.Errorf("failed loading AK: %w", err)
+		return params, fmt.Errorf("failed loading AK %q: %w", ak.name, err)
 	}
 	defer loadedAK.Close(at)
 
@@ -180,11 +218,11 @@ type EncryptedCredential attest.EncryptedCredential
 // ActivateCredential decrypts the secret using the key to prove that the AK was
 // generated on the same TPM as the EK. This operation is synonymous with
 // TPM2_ActivateCredential.
-func (ak AK) ActivateCredential(ctx context.Context, in EncryptedCredential) (secret []byte, err error) {
+func (ak *AK) ActivateCredential(ctx context.Context, in EncryptedCredential) (secret []byte, err error) {
 	if err := ak.tpm.Open(ctx); err != nil {
 		return secret, fmt.Errorf("failed opening TPM: %w", err)
 	}
-	defer ak.tpm.Close(ctx, false)
+	defer ak.tpm.Close(ctx)
 
 	at, err := attest.OpenTPM(ak.tpm.attestConfig)
 	if err != nil {
@@ -192,9 +230,9 @@ func (ak AK) ActivateCredential(ctx context.Context, in EncryptedCredential) (se
 	}
 	defer at.Close()
 
-	loadedAK, err := at.LoadAK(ak.Data)
+	loadedAK, err := at.LoadAK(ak.data)
 	if err != nil {
-		return secret, fmt.Errorf("failed loading AK: %w", err)
+		return secret, fmt.Errorf("failed loading AK %q: %w", ak.name, err)
 	}
 	defer loadedAK.Close(at)
 

@@ -7,7 +7,7 @@ require (
 	github.com/jedib0t/go-pretty v4.3.0+incompatible
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
-	go.step.sm/crypto v0.25.1-0.20230214233057-39fc78acbed7
+	go.step.sm/crypto v0.25.1-0.20230216142255-f2287aad6813
 )
 
 require (

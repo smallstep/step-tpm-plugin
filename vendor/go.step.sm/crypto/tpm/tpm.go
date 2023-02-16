@@ -52,6 +52,12 @@ func New(opts ...NewTPMOption) (*TPM, error) {
 }
 
 func (t *TPM) Open(ctx context.Context) error {
+	// prevent opening the TPM multiple times if Open is called
+	// within the package multiple times.
+	if isInternalCall(ctx) {
+		return nil
+	}
+
 	t.lock.Lock()
 
 	if err := t.store.Load(); err != nil { // TODO: load this once
@@ -61,14 +67,11 @@ func (t *TPM) Open(ctx context.Context) error {
 	return nil
 }
 
-func (t *TPM) Close(ctx context.Context, shouldPersist bool) error {
-	if shouldPersist {
-		if err := t.store.Persist(); err != nil {
-			return err
-		}
+func (t *TPM) Close(ctx context.Context) {
+	// prevent closing the TPM multiple times if Open is called
+	// within the package multiple times.
+	if isInternalCall(ctx) {
+		return
 	}
-
 	t.lock.Unlock()
-
-	return nil
 }

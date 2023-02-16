@@ -85,7 +85,7 @@ go.mongodb.org/mongo-driver/bson/bsonrw
 go.mongodb.org/mongo-driver/bson/bsontype
 go.mongodb.org/mongo-driver/bson/primitive
 go.mongodb.org/mongo-driver/x/bsonx/bsoncore
-# go.step.sm/crypto v0.25.1-0.20230214233057-39fc78acbed7
+# go.step.sm/crypto v0.25.1-0.20230216142255-f2287aad6813
 ## explicit; go 1.18
 go.step.sm/crypto/tpm
 go.step.sm/crypto/tpm/internal/key
