@@ -8,10 +8,11 @@ import (
 	"github.com/jedib0t/go-pretty/table"
 	"github.com/spf13/cobra"
 
+	"go.step.sm/crypto/tpm"
+
 	"github.com/smallstep/step-tpm-plugin/internal/command"
 	"github.com/smallstep/step-tpm-plugin/internal/flag"
 	"github.com/smallstep/step-tpm-plugin/internal/render"
-	"go.step.sm/crypto/tpm"
 )
 
 func NewGetEKCommand() *cobra.Command {
@@ -77,13 +78,14 @@ func runGetEK(ctx context.Context) error {
 	default:
 		t1 := table.NewWriter()
 		t1.SetOutputMirror(os.Stdout)
-		t1.AppendHeader(table.Row{"Public Key", "Certificate", "CertificateURL"})
+		t1.AppendHeader(table.Row{"Type", "Certificate", "CertificateURL"})
 		for _, ek := range eks {
 			cert := "-"
-			if ek.Certificate != nil {
+			if ek.Certificate() != nil {
 				cert = "OK"
 			}
-			t1.AppendRow(table.Row{fmt.Sprintf("%T", ek.Public), cert, ek.CertificateURL})
+
+			t1.AppendRow(table.Row{ek.Type(), cert, ek.CertificateURL()})
 		}
 		t1.Render()
 	}

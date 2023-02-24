@@ -9,6 +9,9 @@ const (
 	FlagJSON             = "json"
 	FlagPEM              = "pem"
 	FlagAK               = "ak"
+	FlagBlob             = "blob"
+	FlagPrivate          = "private"
+	FlagPublic           = "public"
 )
 
 // Flag wraps the set of flags.
@@ -148,5 +151,26 @@ func AK() String {
 	return String{
 		Name:        FlagAK,
 		Description: "Name of the AK to attest new key with",
+	}
+}
+
+func Blob() Bool {
+	return Bool{
+		Name:        FlagBlob,
+		Description: "Print a blob",
+	}
+}
+
+func Private() Bool {
+	return Bool{
+		Name:        FlagPrivate,
+		Description: "Print private blob",
+	}
+}
+
+func Public() Bool {
+	return Bool{
+		Name:        FlagPublic,
+		Description: "Print public blob",
 	}
 }

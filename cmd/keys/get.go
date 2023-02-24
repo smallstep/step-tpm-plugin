@@ -3,6 +3,7 @@ package keys
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"os"
 
@@ -31,6 +32,9 @@ func NewGetKeyCommand() *cobra.Command {
 		flag.StorageDirectory(),
 		flag.JSON(),
 		flag.Device(),
+		flag.Blob(),
+		flag.Private(),
+		flag.Public(),
 	)
 
 	return cmd
@@ -38,9 +42,12 @@ func NewGetKeyCommand() *cobra.Command {
 
 func runGetKey(ctx context.Context) error {
 	var (
-		t    = tpm.FromContext(ctx)
-		json = flag.GetBool(ctx, flag.FlagJSON)
-		name = flag.FirstArg(ctx)
+		t             = tpm.FromContext(ctx)
+		json          = flag.GetBool(ctx, flag.FlagJSON)
+		name          = flag.FirstArg(ctx)
+		outputBlob    = flag.GetBool(ctx, flag.FlagBlob)
+		outputPrivate = flag.GetBool(ctx, flag.FlagPrivate)
+		outputPublic  = flag.GetBool(ctx, flag.FlagPublic)
 	)
 
 	key, err := t.GetKey(ctx, name)
@@ -48,6 +55,46 @@ func runGetKey(ctx context.Context) error {
 		return fmt.Errorf("getting key failed: %w", err)
 	}
 
+	if outputBlob {
+
+		blobs, err := key.Blobs(ctx)
+		if err != nil {
+			return fmt.Errorf("failed getting key blobs: %w", err)
+		}
+
+		switch {
+		case outputPrivate:
+
+			private, err := blobs.Private()
+			if err != nil {
+				return fmt.Errorf("failed getting private: %w", err)
+			}
+
+			// TODO: add option to write to file
+			fmt.Println(string(private))
+
+			// TODO: add flag to output hex?
+			//fmt.Println(hex.EncodeToString(private))
+
+		case outputPublic:
+
+			public, err := blobs.Public()
+			if err != nil {
+				return fmt.Errorf("failed getting public: %w", err)
+			}
+
+			// TODO: add option to write to file
+			fmt.Println(string(public))
+
+			// TODO: add flag to output hex?
+			//fmt.Println(hex.EncodeToString(public))
+
+		default:
+			return errors.New("pick --private or --public") // TODO better error
+		}
+
+		return nil
+	}
 	if json {
 		return render.JSON(os.Stdout, key)
 	}

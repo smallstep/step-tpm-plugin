@@ -7,13 +7,12 @@ import (
 	"github.com/jedib0t/go-pretty/table"
 	"github.com/spf13/cobra"
 
+	"go.step.sm/crypto/tpm"
+
 	"github.com/smallstep/step-tpm-plugin/internal/command"
 	"github.com/smallstep/step-tpm-plugin/internal/flag"
 	"github.com/smallstep/step-tpm-plugin/internal/render"
-	"go.step.sm/crypto/tpm"
 )
-
-// TODO(hs): move to internal?
 
 func NewListAKCommand() *cobra.Command {
 	const (

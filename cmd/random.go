@@ -9,9 +9,10 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"go.step.sm/crypto/tpm"
+
 	"github.com/smallstep/step-tpm-plugin/internal/command"
 	"github.com/smallstep/step-tpm-plugin/internal/flag"
-	"go.step.sm/crypto/tpm"
 )
 
 func NewRandomCommand() *cobra.Command {

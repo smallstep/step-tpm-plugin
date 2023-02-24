@@ -32,7 +32,7 @@ func init() {
 	// will be global for your application.
 
 	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.step-tpm-plugin.yaml)")
-
+	rootCmd.SilenceUsage = true
 	rootCmd.AddCommand(
 		NewInfoCommand(),
 		NewEKCommand(),
