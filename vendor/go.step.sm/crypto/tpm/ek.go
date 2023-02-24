@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"crypto"
+	"crypto/ecdsa"
+	"crypto/rsa"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
@@ -18,40 +20,49 @@ import (
 )
 
 type EK struct {
-	Public         crypto.PublicKey
-	Certificate    *x509.Certificate
-	CertificateURL string
+	public         crypto.PublicKey
+	certificate    *x509.Certificate
+	certificateURL string
 }
 
-func (ek EK) MarshalJSON() ([]byte, error) {
-	type out struct {
+func (ek *EK) Public() crypto.PublicKey {
+	return ek.public
+}
+
+func (ek *EK) Certificate() *x509.Certificate {
+	return ek.certificate
+}
+
+func (ek *EK) CertificateURL() string {
+	return ek.certificateURL
+}
+
+func (ek *EK) MarshalJSON() ([]byte, error) {
+	var der []byte
+	if ek.certificate != nil {
+		der = ek.certificate.Raw
+	}
+	o := struct {
 		Type string `json:"type"`
-		PEM  string `json:"pem,omitempty"`
+		DER  []byte `json:"der,omitempty"`
 		URL  string `json:"url,omitempty"`
+	}{
+		Type: ek.Type(),
+		DER:  der,
+		URL:  ek.certificateURL,
 	}
-	var pemString string
-	var err error
-	if ek.Certificate != nil {
-		if pemString, err = ek.PEM(); err != nil {
-			return nil, err
-		}
-	}
-	o := out{
-		Type: fmt.Sprintf("%T", ek.Public), // TODO: proper description string; on EK struct
-		PEM:  pemString,
-		URL:  ek.CertificateURL,
-	}
+
 	return json.Marshal(o)
 }
 
-func (ek EK) PEM() (string, error) {
-	if ek.Certificate == nil {
-		return "", fmt.Errorf("EK %T does not have a certificate", ek) // TODO: proper string for the type of EK
+func (ek *EK) PEM() (string, error) {
+	if ek.certificate == nil {
+		return "", fmt.Errorf("EK %q does not have a certificate", ek.Type())
 	}
 	var buf bytes.Buffer
 	if err := pem.Encode(&buf, &pem.Block{
 		Type:  "CERTIFICATE",
-		Bytes: ek.Certificate.Raw,
+		Bytes: ek.certificate.Raw,
 	}); err != nil {
 		return "", fmt.Errorf("failed encoding EK certificate to PEM: %w", err)
 	}
@@ -59,24 +70,38 @@ func (ek EK) PEM() (string, error) {
 	return buf.String(), nil
 }
 
+func (ek *EK) Type() string {
+	return keyType(ek.public)
+}
+
+func keyType(p crypto.PublicKey) string {
+	switch t := p.(type) {
+	case *rsa.PublicKey:
+		return fmt.Sprintf("RSA %d", t.Size()*8)
+	case *ecdsa.PublicKey:
+		switch size := t.Curve.Params().BitSize; size {
+		case 256, 384, 521:
+			return fmt.Sprintf("ECDSA P-%d", size)
+		default:
+			return fmt.Sprintf("unexpected ECDSA size: %d", size)
+		}
+	default:
+		return fmt.Sprintf("unsupported public key type: %T", p)
+	}
+}
+
 type intelEKCertResponse struct {
 	Pubhash     string `json:"pubhash"`
 	Certificate string `json:"certificate"`
 }
 
-func (t *TPM) GetEKs(ctx context.Context) ([]EK, error) {
+func (t *TPM) GetEKs(ctx context.Context) ([]*EK, error) {
 	if err := t.Open(ctx); err != nil {
 		return nil, fmt.Errorf("failed opening TPM: %w", err)
 	}
 	defer t.Close(ctx)
 
-	at, err := attest.OpenTPM(t.attestConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed opening TPM: %w", err)
-	}
-	defer at.Close()
-
-	eks, err := at.EKs()
+	eks, err := t.attestTPM.EKs()
 	if err != nil {
 		return nil, fmt.Errorf("failed getting EKs: %w", err)
 	}
@@ -87,7 +112,7 @@ func (t *TPM) GetEKs(ctx context.Context) ([]EK, error) {
 		return nil, fmt.Errorf("number of EKs (%d) bigger than the maximum allowed %d", len(eks), maxNumberOfEKs)
 	}
 
-	result := make([]EK, 0, len(eks))
+	result := make([]*EK, 0, len(eks))
 	for _, ek := range eks {
 		ekCert := ek.Certificate
 		ekURL := ek.CertificateURL
@@ -145,10 +170,10 @@ func (t *TPM) GetEKs(ctx context.Context) ([]EK, error) {
 			}
 		}
 
-		result = append(result, EK{
-			Public:         ek.Public,
-			Certificate:    ekCert,
-			CertificateURL: ekURL,
+		result = append(result, &EK{
+			public:         ek.Public,
+			certificate:    ekCert,
+			certificateURL: ekURL,
 		})
 	}
 

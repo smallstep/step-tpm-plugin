@@ -16,7 +16,7 @@ github.com/google/certificate-transparency-go/asn1
 github.com/google/certificate-transparency-go/tls
 github.com/google/certificate-transparency-go/x509
 github.com/google/certificate-transparency-go/x509/pkix
-# github.com/google/go-attestation v0.4.4-0.20220404204839-8820d49b18d9 => github.com/smallstep/go-attestation v0.4.4-0.20230113130042-0ad94dd6a52e
+# github.com/google/go-attestation v0.4.4-0.20220404204839-8820d49b18d9 => github.com/smallstep/go-attestation v0.4.4-0.20230224121042-1bcb20a75add
 ## explicit; go 1.16
 github.com/google/go-attestation/attest
 github.com/google/go-attestation/attest/internal
@@ -27,6 +27,10 @@ github.com/google/go-tpm/tpm2
 github.com/google/go-tpm/tpm2/credactivation
 github.com/google/go-tpm/tpmutil
 github.com/google/go-tpm/tpmutil/tbs
+# github.com/google/go-tpm-tools v0.3.10
+## explicit; go 1.19
+github.com/google/go-tpm-tools/simulator
+github.com/google/go-tpm-tools/simulator/internal
 # github.com/google/go-tspi v0.3.0
 ## explicit; go 1.12
 github.com/google/go-tspi/attestation
@@ -85,12 +89,13 @@ go.mongodb.org/mongo-driver/bson/bsonrw
 go.mongodb.org/mongo-driver/bson/bsontype
 go.mongodb.org/mongo-driver/bson/primitive
 go.mongodb.org/mongo-driver/x/bsonx/bsoncore
-# go.step.sm/crypto v0.25.1-0.20230216142255-f2287aad6813
+# go.step.sm/crypto v0.25.1-0.20230224155821-ed30c51e7f3d
 ## explicit; go 1.18
 go.step.sm/crypto/tpm
 go.step.sm/crypto/tpm/internal/key
 go.step.sm/crypto/tpm/internal/open
 go.step.sm/crypto/tpm/manufacturer
+go.step.sm/crypto/tpm/simulator
 go.step.sm/crypto/tpm/skae
 go.step.sm/crypto/tpm/storage
 # golang.org/x/crypto v0.6.0
@@ -103,3 +108,4 @@ golang.org/x/crypto/ed25519
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows
+# github.com/google/go-attestation => github.com/smallstep/go-attestation v0.4.4-0.20230224121042-1bcb20a75add

@@ -17,6 +17,7 @@ type AK struct {
 	name      string
 	data      []byte
 	createdAt time.Time
+	blobs     *Blobs
 	tpm       *TPM
 }
 
@@ -32,7 +33,7 @@ func (ak *AK) Data() []byte {
 
 // CreatedAt returns the creation time of the AK.
 func (ak *AK) CreatedAt() time.Time {
-	return ak.createdAt
+	return ak.createdAt.Truncate(time.Second)
 }
 
 func (ak *AK) MarshalJSON() ([]byte, error) {
@@ -55,14 +56,8 @@ func (t *TPM) CreateAK(ctx context.Context, name string) (*AK, error) {
 	}
 	defer t.Close(ctx)
 
-	at, err := attest.OpenTPM(t.attestConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed opening TPM: %w", err)
-	}
-	defer at.Close()
-
 	now := time.Now()
-
+	var err error
 	if name, err = processName(name); err != nil {
 		return nil, err
 	}
@@ -74,11 +69,11 @@ func (t *TPM) CreateAK(ctx context.Context, name string) (*AK, error) {
 	akConfig := attest.AKConfig{
 		Name: prefixAK(name),
 	}
-	ak, err := at.NewAK(&akConfig)
+	ak, err := t.attestTPM.NewAK(&akConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed creating new AK %q: %w", name, err)
 	}
-	defer ak.Close(at)
+	defer ak.Close(t.attestTPM)
 
 	data, err := ak.Marshal()
 	if err != nil {
@@ -111,7 +106,7 @@ func (t *TPM) GetAK(ctx context.Context, name string) (*AK, error) {
 	ak, err := t.store.GetAK(name)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
-			return nil, ErrNotFound
+			return nil, fmt.Errorf("failed getting AK %q: %w", name, ErrNotFound)
 		}
 		return nil, fmt.Errorf("failed getting AK %q: %w", name, err)
 	}
@@ -135,6 +130,8 @@ func (t *TPM) ListAKs(ctx context.Context) ([]*AK, error) {
 		result = append(result, &AK{name: ak.Name, data: ak.Data, createdAt: ak.CreatedAt, tpm: t})
 	}
 
+	// TODO: include ordering by name or createdAt?
+
 	return result, nil
 }
 
@@ -144,18 +141,12 @@ func (t *TPM) DeleteAK(ctx context.Context, name string) error {
 	}
 	defer t.Close(ctx)
 
-	at, err := attest.OpenTPM(t.attestConfig)
-	if err != nil {
-		return fmt.Errorf("failed opening TPM: %w", err)
-	}
-	defer at.Close()
-
 	ak, err := t.store.GetAK(name)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
-			return fmt.Errorf("failed loading AK %q: %w", name, ErrNotFound)
+			return fmt.Errorf("failed getting AK %q: %w", name, ErrNotFound)
 		}
-		return fmt.Errorf("failed loading AK %q: %w", name, err)
+		return fmt.Errorf("failed getting AK %q: %w", name, err)
 	}
 
 	// prevent deleting the AK if the TPM (storage) contains keys that
@@ -171,7 +162,7 @@ func (t *TPM) DeleteAK(ctx context.Context, name string) error {
 		return fmt.Errorf("cannot delete AK %q before deleting keys that were attested by it", name)
 	}
 
-	if err := at.DeleteKey(ak.Data); err != nil {
+	if err := t.attestTPM.DeleteKey(ak.Data); err != nil { // TODO: we could add a DeleteAK to go-attestation; under the hood it's loaded the same as a key though.
 		return fmt.Errorf("failed deleting AK %q: %w", name, err)
 	}
 
@@ -194,17 +185,11 @@ func (ak *AK) AttestationParameters(ctx context.Context) (params attest.Attestat
 	}
 	defer ak.tpm.Close(ctx)
 
-	at, err := attest.OpenTPM(ak.tpm.attestConfig)
-	if err != nil {
-		return params, fmt.Errorf("failed opening TPM: %w", err)
-	}
-	defer at.Close()
-
-	loadedAK, err := at.LoadAK(ak.data)
+	loadedAK, err := ak.tpm.attestTPM.LoadAK(ak.data)
 	if err != nil {
 		return params, fmt.Errorf("failed loading AK %q: %w", ak.name, err)
 	}
-	defer loadedAK.Close(at)
+	defer loadedAK.Close(ak.tpm.attestTPM)
 
 	params = loadedAK.AttestationParameters()
 
@@ -224,19 +209,41 @@ func (ak *AK) ActivateCredential(ctx context.Context, in EncryptedCredential) (s
 	}
 	defer ak.tpm.Close(ctx)
 
-	at, err := attest.OpenTPM(ak.tpm.attestConfig)
-	if err != nil {
-		return secret, fmt.Errorf("failed opening TPM: %w", err)
-	}
-	defer at.Close()
-
-	loadedAK, err := at.LoadAK(ak.data)
+	loadedAK, err := ak.tpm.attestTPM.LoadAK(ak.data)
 	if err != nil {
 		return secret, fmt.Errorf("failed loading AK %q: %w", ak.name, err)
 	}
-	defer loadedAK.Close(at)
+	defer loadedAK.Close(ak.tpm.attestTPM)
 
-	secret, err = loadedAK.ActivateCredential(at, attest.EncryptedCredential(in))
+	secret, err = loadedAK.ActivateCredential(ak.tpm.attestTPM, attest.EncryptedCredential(in))
 
 	return
+}
+
+// Blobs returns a container for the private and public AK blobs.
+// The resulting blobs are compatible with tpm2-tools, so can be used
+// like this (after having been written to ak.priv and ak.pub):
+//
+//	tpm2_load -C 0x81000001 -u ak.pub -r ak.priv -c ak.ctx
+func (ak *AK) Blobs(ctx context.Context) (*Blobs, error) {
+	if ak.blobs == nil {
+		if err := ak.tpm.Open(ctx); err != nil {
+			return nil, fmt.Errorf("failed opening TPM: %w", err)
+		}
+		defer ak.tpm.Close(ctx)
+
+		aak, err := ak.tpm.attestTPM.LoadAK(ak.data)
+		if err != nil {
+			return nil, fmt.Errorf("failed loading AK: %w", err)
+		}
+		defer aak.Close(ak.tpm.attestTPM)
+
+		public, private, err := aak.Blobs()
+		if err != nil {
+			return nil, fmt.Errorf("failed getting AK blobs: %w", err)
+		}
+		ak.setBlobs(private, public)
+	}
+
+	return ak.blobs, nil
 }
