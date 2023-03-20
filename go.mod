@@ -7,7 +7,7 @@ require (
 	github.com/jedib0t/go-pretty v4.3.0+incompatible
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
-	go.step.sm/crypto v0.25.1-0.20230224155821-ed30c51e7f3d
+	go.step.sm/crypto v0.27.1-0.20230316202904-956cb09fe55e
 )
 
 require (
@@ -31,8 +31,8 @@ require (
 	github.com/ryboe/q v1.0.19 // indirect
 	github.com/schollz/jsonstore v1.1.0 // indirect
 	go.mongodb.org/mongo-driver v1.11.1 // indirect
-	golang.org/x/crypto v0.6.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/crypto v0.7.0 // indirect
+	golang.org/x/sys v0.6.0 // indirect
 )
 
 replace github.com/google/go-attestation => github.com/smallstep/go-attestation v0.4.4-0.20230224121042-1bcb20a75add
