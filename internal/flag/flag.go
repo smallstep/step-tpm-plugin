@@ -1,6 +1,12 @@
 package flag
 
-import "github.com/spf13/cobra"
+import (
+	"path/filepath"
+
+	"github.com/spf13/cobra"
+
+	"go.step.sm/cli-utils/step"
+)
 
 const (
 	FlagDeviceName       = "device"
@@ -134,7 +140,7 @@ func StorageDirectory() String {
 		Name:        FlagStorageDirectory,
 		Shorthand:   "s",
 		Description: "Directory to store TPM keys",
-		Default:     "tpmkeys",
+		Default:     filepath.Join(step.Path(), "tpm"),
 	}
 }
 
