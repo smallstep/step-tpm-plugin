@@ -109,14 +109,7 @@ func (s *Simulator) Write(commandBuffer []byte) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	n, err := s.buf.Write(resp)
-	if err != nil {
-		return 0, err
-	}
-	if n != (len(resp)) {
-		return 0, errors.New("short write to command response buffer")
-	}
-	return len(commandBuffer), nil
+	return s.buf.Write(resp)
 }
 
 // Read gets the response of a command previously issued by calling Write().
