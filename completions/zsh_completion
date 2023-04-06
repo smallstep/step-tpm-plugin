@@ -1,4 +1,5 @@
 #compdef step-tpm-plugin
+compdef _step-tpm-plugin step-tpm-plugin
 
 # zsh completion for step-tpm-plugin                      -*- shell-script -*-
 
@@ -17,8 +18,9 @@ _step-tpm-plugin()
     local shellCompDirectiveNoFileComp=4
     local shellCompDirectiveFilterFileExt=8
     local shellCompDirectiveFilterDirs=16
+    local shellCompDirectiveKeepOrder=32
 
-    local lastParam lastChar flagPrefix requestComp out directive comp lastComp noSpace
+    local lastParam lastChar flagPrefix requestComp out directive comp lastComp noSpace keepOrder
     local -a completions
 
     __step-tpm-plugin_debug "\n========= starting completion logic =========="
@@ -136,6 +138,11 @@ _step-tpm-plugin()
         noSpace="-S ''"
     fi
 
+    if [ $((directive & shellCompDirectiveKeepOrder)) -ne 0 ]; then
+        __step-tpm-plugin_debug "Activating keep order."
+        keepOrder="-V"
+    fi
+
     if [ $((directive & shellCompDirectiveFilterFileExt)) -ne 0 ]; then
         # File extension filtering
         local filteringCmd
@@ -171,7 +178,7 @@ _step-tpm-plugin()
         return $result
     else
         __step-tpm-plugin_debug "Calling _describe"
-        if eval _describe "completions" completions $flagPrefix $noSpace; then
+        if eval _describe $keepOrder "completions" completions $flagPrefix $noSpace; then
             __step-tpm-plugin_debug "_describe found some completions"
 
             # Return the success of having called _describe
