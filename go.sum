@@ -806,8 +806,8 @@ go.opentelemetry.io/proto/otlp v0.7.0/go.mod h1:PqfVotwruBrMGOCsRd/89rSnXhoiJIqe
 go.step.sm/cli-utils v0.7.5 h1:jyp6X8k8mN1B0uWJydTid0C++8tQhm2kaaAdXKQQzdk=
 go.step.sm/cli-utils v0.7.5/go.mod h1:taSsY8haLmXoXM3ZkywIyRmVij/4Aj0fQbNTlJvv71I=
 go.step.sm/crypto v0.9.0/go.mod h1:+CYG05Mek1YDqi5WK0ERc6cOpKly2i/a5aZmU1sfGj0=
-go.step.sm/crypto v0.28.1-0.20230406175603-6f78af399ab0 h1:o5HpORPGu9lnzZAlyfSAeEubTbTTyCqj9gWCZQlHzOo=
-go.step.sm/crypto v0.28.1-0.20230406175603-6f78af399ab0/go.mod h1:9cgcaYvZf4vJo1vzBbb6uS6ydzUqvfZX6C7GRd0rAzY=
+go.step.sm/crypto v0.29.0 h1:7SU783HQk8daVcku9IIrXBRkqlu0SX9cTlX6DdxeXrk=
+go.step.sm/crypto v0.29.0/go.mod h1:9cgcaYvZf4vJo1vzBbb6uS6ydzUqvfZX6C7GRd0rAzY=
 go.uber.org/atomic v1.3.2/go.mod h1:gD2HeocX3+yG+ygLZcrzQJaqmWj9AIm7n08wl/qW/PE=
 go.uber.org/atomic v1.4.0/go.mod h1:gD2HeocX3+yG+ygLZcrzQJaqmWj9AIm7n08wl/qW/PE=
 go.uber.org/atomic v1.5.0/go.mod h1:sABNBOSYdrvTF6hTgEIbc7YasKWGhgEQZyfxyTvoXHQ=
