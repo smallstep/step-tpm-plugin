@@ -1,18 +1,20 @@
 PKG?=github.com/smallstep/step-tpm-plugin
 BINNAME?=step-tpm-plugin
-GOLANG_CROSS_VERSION?=v1.19.5
+GOLANG_CROSS_VERSION?=v1.20.2
 
 # Set V to 1 for verbose output from the Makefile
 Q=$(if $V,,@)
 PREFIX?=
 SRC=$(shell find . -type f -name '*.go' -not -path "./vendor/*")
 GOOS_OVERRIDE ?=
+OUTPUT_ROOT=output/
+RELEASE=./.releases
 
 #########################################
 # Default
 #########################################
 
-all: build
+all: lint test build
 
 ci: test build
 
@@ -103,10 +105,37 @@ lint:
 # Release
 #########################################
 
-release:
-	@echo "TODO"
+release-dev:
+	$Q @docker run -it --rm --privileged -e CGO_ENABLED=1 \
+		--entrypoint /bin/bash \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v `pwd`:/go/src/$(PKG) \
+		-w /go/src/$(PKG) \
+		ghcr.io/goreleaser/goreleaser-cross:${GOLANG_CROSS_VERSION}
 
-.PHONY: release
+release-dry-run:
+	$Q @docker run --rm --privileged -e CGO_ENABLED=1 \
+		--entrypoint /go/src/$(PKG)/docker/build/entrypoint.sh \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v `pwd`:/go/src/$(PKG) \
+		-w /go/src/$(PKG) \
+		ghcr.io/goreleaser/goreleaser-cross:${GOLANG_CROSS_VERSION} \
+		--clean --skip-validate --skip-publish
+
+release:
+	@if [ ! -f ".release-env" ]; then \
+		echo "\033[91m.release-env is required for release\033[0m";\
+		exit 1;\
+	fi
+	$Q @docker run --rm --privileged -e CGO_ENABLED=1 --env-file .release-env \
+		--entrypoint /go/src/$(PKG)/docker/build/entrypoint.sh \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v `pwd`:/go/src/$(PKG) \
+		-w /go/src/$(PKG) \
+		ghcr.io/goreleaser/goreleaser-cross:${GOLANG_CROSS_VERSION} \
+		release --clean
+
+.PHONY: release-dev release-dry-run release
 
 #########################################
 # Install

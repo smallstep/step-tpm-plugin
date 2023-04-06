@@ -9,6 +9,7 @@
 
 Incomplete lists of things still to do:
 
+- Fix / cleanup Makefile
 - Tests
 - Add `--verbose` for debugging output (incl. interactions with TPM)
 - Handle/transform TPM level errors
