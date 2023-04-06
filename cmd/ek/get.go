@@ -47,7 +47,7 @@ func runGetEK(ctx context.Context) error {
 
 	eks, err := t.GetEKs(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting EKs: %w", err)
+		return fmt.Errorf("failed getting EKs: %w", err)
 	}
 
 	switch {
@@ -56,7 +56,7 @@ func runGetEK(ctx context.Context) error {
 			for _, ek := range eks {
 				b, err := ek.PEM()
 				if err != nil {
-					return err
+					return fmt.Errorf("failed getting EK PEM: %w", err)
 				}
 				fmt.Println(b)
 			}
@@ -65,9 +65,9 @@ func runGetEK(ctx context.Context) error {
 
 		b, err := eks[0].PEM()
 		if err != nil {
-			return err
+			return fmt.Errorf("failed getting EK PEM: %w", err)
 		}
-		fmt.Println(b)
+		fmt.Print(b)
 
 	case json:
 		if all {
@@ -78,14 +78,17 @@ func runGetEK(ctx context.Context) error {
 	default:
 		t1 := table.NewWriter()
 		t1.SetOutputMirror(os.Stdout)
-		t1.AppendHeader(table.Row{"Type", "Certificate", "CertificateURL"})
+		t1.AppendHeader(table.Row{"Type", "Certificate", "URI", "CertificateURL"})
 		for _, ek := range eks {
 			cert := "-"
 			if ek.Certificate() != nil {
 				cert = "OK"
 			}
-
-			t1.AppendRow(table.Row{ek.Type(), cert, ek.CertificateURL()})
+			u, err := ek.FingerprintURI()
+			if err != nil {
+				return fmt.Errorf("failed getting EK fingerprint URI: %w", err)
+			}
+			t1.AppendRow(table.Row{ek.Type(), cert, u.String(), ek.CertificateURL()})
 		}
 		t1.Render()
 	}
