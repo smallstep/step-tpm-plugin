@@ -104,7 +104,7 @@ func (k *Key) MarshalJSON() ([]byte, error) {
 	return json.Marshal(o)
 }
 
-// comparablePublicKey is an interface that allows an crypto.PublicKey to be
+// comparablePublicKey is an interface that allows a crypto.PublicKey to be
 // compared to another crypto.PublicKey.
 type comparablePublicKey interface {
 	Equal(crypto.PublicKey) bool
@@ -143,15 +143,13 @@ type AttestKeyConfig struct {
 // CreateKey creates a new Key identified by `name`. If no name is  provided,
 // a random 10 character name is generated. If a Key with the same name exists,
 // `ErrExists` is returned. The Key won't be attested by an AK.
-func (t *TPM) CreateKey(ctx context.Context, name string, config CreateKeyConfig) (*Key, error) {
-	if err := t.Open(ctx); err != nil {
+func (t *TPM) CreateKey(ctx context.Context, name string, config CreateKeyConfig) (key *Key, err error) {
+	if err = t.open(ctx); err != nil {
 		return nil, fmt.Errorf("failed opening TPM: %w", err)
 	}
-	defer t.Close(ctx)
+	defer closeTPM(ctx, t, &err)
 
 	now := time.Now()
-
-	var err error
 	if name, err = processName(name); err != nil {
 		return nil, err
 	}
@@ -169,7 +167,7 @@ func (t *TPM) CreateKey(ctx context.Context, name string, config CreateKeyConfig
 		return nil, fmt.Errorf("failed creating key %q: %w", name, err)
 	}
 
-	key := &Key{
+	key = &Key{
 		name:      name,
 		data:      data,
 		createdAt: now,
@@ -184,20 +182,19 @@ func (t *TPM) CreateKey(ctx context.Context, name string, config CreateKeyConfig
 		return nil, fmt.Errorf("failed persisting key %q to storage: %w", name, err)
 	}
 
-	return key, nil
+	return
 }
 
 // AttestKey creates a new Key identified by `name` and attested by the AK
 // identified by `akName`. If no name is  provided, a random 10 character
 // name is generated. If a Key with the same name exists, `ErrExists` is
 // returned.
-func (t *TPM) AttestKey(ctx context.Context, akName, name string, config AttestKeyConfig) (*Key, error) {
-	if err := t.Open(ctx); err != nil {
+func (t *TPM) AttestKey(ctx context.Context, akName, name string, config AttestKeyConfig) (key *Key, err error) {
+	if err = t.open(ctx); err != nil {
 		return nil, fmt.Errorf("failed opening TPM: %w", err)
 	}
-	defer t.Close(ctx)
+	defer closeTPM(ctx, t, &err)
 
-	var err error
 	now := time.Now()
 	if name, err = processName(name); err != nil {
 		return nil, err
@@ -235,7 +232,7 @@ func (t *TPM) AttestKey(ctx context.Context, akName, name string, config AttestK
 		return nil, fmt.Errorf("failed marshaling key %q: %w", name, err)
 	}
 
-	key := &Key{
+	key = &Key{
 		name:       name,
 		data:       data,
 		attestedBy: akName,
@@ -251,18 +248,18 @@ func (t *TPM) AttestKey(ctx context.Context, akName, name string, config AttestK
 		return nil, fmt.Errorf("failed persisting key %q: %w", name, err)
 	}
 
-	return key, nil
+	return
 }
 
 // GetKey returns the Key identified by `name`. It returns `ErrNotfound`
 // if it doesn't exist.
-func (t *TPM) GetKey(ctx context.Context, name string) (*Key, error) {
-	if err := t.Open(ctx); err != nil {
+func (t *TPM) GetKey(ctx context.Context, name string) (key *Key, err error) {
+	if err = t.open(ctx); err != nil {
 		return nil, fmt.Errorf("failed opening TPM: %w", err)
 	}
-	defer t.Close(ctx)
+	defer closeTPM(ctx, t, &err)
 
-	key, err := t.store.GetKey(name)
+	skey, err := t.store.GetKey(name)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return nil, fmt.Errorf("failed getting key %q: %w", name, ErrNotFound)
@@ -270,60 +267,60 @@ func (t *TPM) GetKey(ctx context.Context, name string) (*Key, error) {
 		return nil, fmt.Errorf("failed getting key %q: %w", name, err)
 	}
 
-	return keyFromStorage(key, t), nil
+	return keyFromStorage(skey, t), nil
 }
 
 // ListKeys returns a slice of Keys. The result is (currently)
 // not ordered.
-func (t *TPM) ListKeys(ctx context.Context) ([]*Key, error) {
-	if err := t.Open(ctx); err != nil {
+func (t *TPM) ListKeys(ctx context.Context) (keys []*Key, err error) {
+	if err = t.open(ctx); err != nil {
 		return nil, fmt.Errorf("failed opening TPM: %w", err)
 	}
-	defer t.Close(ctx)
+	defer closeTPM(ctx, t, &err)
 
-	keys, err := t.store.ListKeys()
+	skeys, err := t.store.ListKeys()
 	if err != nil {
 		return nil, fmt.Errorf("failed listing keys: %w", err)
 	}
 
-	result := make([]*Key, 0, len(keys))
-	for _, key := range keys {
-		result = append(result, keyFromStorage(key, t))
+	keys = make([]*Key, 0, len(skeys))
+	for _, skey := range skeys {
+		keys = append(keys, keyFromStorage(skey, t))
 	}
 
-	return result, nil
+	return
 }
 
 // GetKeysAttestedBy returns a slice of Keys attested by the AK
 // identified by `akName`. The result is (currently) not ordered.
-func (t *TPM) GetKeysAttestedBy(ctx context.Context, akName string) ([]*Key, error) {
-	if err := t.Open(ctx); err != nil {
+func (t *TPM) GetKeysAttestedBy(ctx context.Context, akName string) (keys []*Key, err error) {
+	if err = t.open(ctx); err != nil {
 		return nil, fmt.Errorf("failed opening TPM: %w", err)
 	}
-	defer t.Close(ctx)
+	defer closeTPM(ctx, t, &err)
 
-	keys, err := t.store.ListKeys()
+	skeys, err := t.store.ListKeys()
 	if err != nil {
 		return nil, fmt.Errorf("failed listing keys: %w", err)
 	}
 
-	result := make([]*Key, 0, len(keys))
-	for _, key := range keys {
-		if key.AttestedBy == akName {
-			result = append(result, keyFromStorage(key, t))
+	keys = make([]*Key, 0, len(skeys))
+	for _, skey := range skeys {
+		if skey.AttestedBy == akName {
+			keys = append(keys, keyFromStorage(skey, t))
 		}
 	}
 
-	return result, nil
+	return
 }
 
 // DeleteKey removes the Key identified by `name`. It returns `ErrNotfound`
 // if it doesn't exist.
-func (t *TPM) DeleteKey(ctx context.Context, name string) error {
-	if err := t.Open(ctx); err != nil {
+func (t *TPM) DeleteKey(ctx context.Context, name string) (err error) {
+	if err := t.open(ctx); err != nil {
 		return fmt.Errorf("failed opening TPM: %w", err)
 	}
-	defer t.Close(ctx)
+	defer closeTPM(ctx, t, &err)
 
 	key, err := t.store.GetKey(name)
 	if err != nil {
@@ -345,7 +342,7 @@ func (t *TPM) DeleteKey(ctx context.Context, name string) error {
 		return fmt.Errorf("failed persisting storage: %w", err)
 	}
 
-	return nil
+	return
 }
 
 // Signer returns a crypto.Signer backed by the Key.
@@ -356,10 +353,10 @@ func (k *Key) Signer(ctx context.Context) (crypto.Signer, error) {
 // CertificationParameters returns information about the key that can be used to
 // verify key certification.
 func (k *Key) CertificationParameters(ctx context.Context) (params attest.CertificationParameters, err error) {
-	if err := k.tpm.Open(ctx); err != nil {
+	if err = k.tpm.open(ctx); err != nil {
 		return params, fmt.Errorf("failed opening TPM: %w", err)
 	}
-	defer k.tpm.Close(ctx)
+	defer closeTPM(ctx, k.tpm, &err)
 
 	loadedKey, err := k.tpm.attestTPM.LoadKey(k.data)
 	if err != nil {
@@ -377,25 +374,27 @@ func (k *Key) CertificationParameters(ctx context.Context) (params attest.Certif
 // like this (after having been written to key.priv and key.pub):
 //
 //	tpm2_load -C 0x81000001 -u key.pub -r key.priv -c key.ctx
-func (k *Key) Blobs(ctx context.Context) (*Blobs, error) {
-	if k.blobs == nil {
-		if err := k.tpm.Open(ctx); err != nil {
-			return nil, fmt.Errorf("failed opening TPM: %w", err)
-		}
-		defer k.tpm.Close(ctx)
-
-		key, err := k.tpm.attestTPM.LoadKey(k.data)
-		if err != nil {
-			return nil, fmt.Errorf("failed loading key: %w", err)
-		}
-		defer key.Close()
-
-		public, private, err := key.Blobs()
-		if err != nil {
-			return nil, fmt.Errorf("failed getting key blobs: %w", err)
-		}
-		k.setBlobs(private, public)
+func (k *Key) Blobs(ctx context.Context) (blobs *Blobs, err error) {
+	if k.blobs != nil {
+		return k.blobs, nil
 	}
+
+	if err = k.tpm.open(ctx); err != nil {
+		return nil, fmt.Errorf("failed opening TPM: %w", err)
+	}
+	defer closeTPM(ctx, k.tpm, &err)
+
+	key, err := k.tpm.attestTPM.LoadKey(k.data)
+	if err != nil {
+		return nil, fmt.Errorf("failed loading key: %w", err)
+	}
+	defer key.Close()
+
+	public, private, err := key.Blobs()
+	if err != nil {
+		return nil, fmt.Errorf("failed getting key blobs: %w", err)
+	}
+	k.setBlobs(private, public)
 
 	return k.blobs, nil
 }
@@ -403,11 +402,11 @@ func (k *Key) Blobs(ctx context.Context) (*Blobs, error) {
 // SetCertificateChain associates an X.509 certificate chain with the Key.
 // If the public key doesn't match the public key in the first certificate
 // in the chain (the leaf), an error is returned.
-func (k *Key) SetCertificateChain(ctx context.Context, chain []*x509.Certificate) error {
-	if err := k.tpm.Open(ctx); err != nil {
+func (k *Key) SetCertificateChain(ctx context.Context, chain []*x509.Certificate) (err error) {
+	if err = k.tpm.open(ctx); err != nil {
 		return fmt.Errorf("failed opening TPM: %w", err)
 	}
-	defer k.tpm.Close(ctx)
+	defer closeTPM(ctx, k.tpm, &err)
 
 	signer, err := k.Signer(internalCall(ctx)) // TODO: cache the crypto.PublicKey after its first load instead?
 	if err != nil {
@@ -422,7 +421,7 @@ func (k *Key) SetCertificateChain(ctx context.Context, chain []*x509.Certificate
 
 	publicKey, ok := leafPK.(comparablePublicKey)
 	if !ok {
-		return errors.New("no method Equal() defined on certificate public key")
+		return errors.New("certificate public key can't be compared to a crypto.PublicKey")
 	}
 
 	if !publicKey.Equal(signer.Public()) {
@@ -435,7 +434,7 @@ func (k *Key) SetCertificateChain(ctx context.Context, chain []*x509.Certificate
 		return fmt.Errorf("failed updating key %q: %w", k.name, err)
 	}
 
-	return nil
+	return
 }
 
 // toStorage transforms the Key to the struct used for
@@ -446,7 +445,7 @@ func (k *Key) toStorage() *storage.Key {
 		Data:       k.data,
 		AttestedBy: k.attestedBy,
 		Chain:      k.chain,
-		CreatedAt:  k.createdAt,
+		CreatedAt:  k.createdAt.UTC(),
 	}
 }
 
@@ -458,7 +457,7 @@ func keyFromStorage(sk *storage.Key, t *TPM) *Key {
 		data:       sk.Data,
 		attestedBy: sk.AttestedBy,
 		chain:      sk.Chain,
-		createdAt:  sk.CreatedAt,
+		createdAt:  sk.CreatedAt.Local(),
 		tpm:        t,
 	}
 }

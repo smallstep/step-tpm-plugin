@@ -27,9 +27,7 @@ var commonPreparers = []Preparer{
 	fallbackTPMStore,
 }
 
-var commonFinalizers = []Finalizer{
-	ensureCloseWithPersist,
-}
+var commonFinalizers = []Finalizer{}
 
 func runE(fn Runner, preparers []Preparer, finalizers ...Finalizer) func(*cobra.Command, []string) error {
 	if fn == nil {

@@ -8,7 +8,7 @@ require (
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
 	go.step.sm/cli-utils v0.7.5
-	go.step.sm/crypto v0.27.1-0.20230316202904-956cb09fe55e
+	go.step.sm/crypto v0.28.1-0.20230406175603-6f78af399ab0
 )
 
 require (
@@ -23,8 +23,6 @@ require (
 	github.com/google/go-tpm-tools v0.3.10 // indirect
 	github.com/google/go-tspi v0.3.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
-	github.com/kr/pretty v0.3.1 // indirect
-	github.com/kr/text v0.2.0 // indirect
 	github.com/manifoldco/promptui v0.9.0 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/mitchellh/mapstructure v1.3.3 // indirect
@@ -32,9 +30,7 @@ require (
 	github.com/peterbourgon/diskv/v3 v3.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
-	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	github.com/ryboe/q v1.0.19 // indirect
 	github.com/schollz/jsonstore v1.1.0 // indirect
 	github.com/urfave/cli v1.22.7 // indirect
 	go.mongodb.org/mongo-driver v1.11.1 // indirect

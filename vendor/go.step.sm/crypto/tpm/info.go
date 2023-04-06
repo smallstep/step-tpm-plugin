@@ -32,7 +32,7 @@ func (v Version) String() string {
 	case Version(attest.TPMVersion20):
 		return "TPM 2.0"
 	default:
-		return "unknown"
+		return fmt.Sprintf("unknown (%d)", v)
 	}
 }
 
@@ -45,7 +45,7 @@ func (v Version) MarshalJSON() ([]byte, error) {
 	case Version(attest.TPMVersion20):
 		s = "2.0"
 	default:
-		s = "unknown"
+		s = fmt.Sprintf("unknown (%d)", v)
 	}
 	return json.Marshal(s)
 }
@@ -66,7 +66,7 @@ func (i Interface) String() string {
 	case Interface(attest.TPMInterfaceCommandChannel):
 		return "command-channel"
 	default:
-		return "unknown"
+		return fmt.Sprintf("unknown (%d)", i)
 	}
 }
 
@@ -111,39 +111,50 @@ func (m Manufacturer) String() string {
 
 // GetManufacturerByID returns a Manufacturer based on its Manufacturer ID
 // code.
-func GetManufacturerByID(id manufacturer.ID) Manufacturer {
-	ascii, hexa := manufacturer.GetEncodings(id)
-	name := manufacturer.GetNameByASCII(ascii)
-	return Manufacturer{
-		Name:  name,
-		ASCII: ascii,
-		ID:    id,
-		Hex:   hexa,
+func GetManufacturerByID(id manufacturer.ID) (m Manufacturer) {
+	m.ID = id
+	m.ASCII, m.Hex = manufacturer.GetEncodings(id)
+	// the FIDO Alliance fake TPM vendor ID doesn't conform to the standard ASCII lookup
+	if id == 4294963664 {
+		m.ASCII = "FIDO"
 	}
+	m.Name = manufacturer.GetNameByASCII(m.ASCII)
+
+	return
 }
 
-// Info returns info about the TPM.
-func (t *TPM) Info(ctx context.Context) (*Info, error) {
-	if err := t.Open(ctx); err != nil {
+// Info returns info about the TPM. The info doesn't change, so
+// it's cached after the first lookup.
+func (t *TPM) Info(ctx context.Context) (info *Info, err error) {
+	if t.info != nil {
+		return t.info, nil
+	}
+
+	if err = t.open(ctx); err != nil {
 		return nil, fmt.Errorf("failed opening TPM: %w", err)
 	}
-	defer t.Close(ctx)
+	defer func() {
+		closeTPM(ctx, t, &err)
+	}()
 
-	info, err := t.attestTPM.Info()
+	ainfo, err := t.attestTPM.Info()
 	if err != nil {
 		return nil, fmt.Errorf("failed getting TPM info: %w", err)
 	}
 
-	result := &Info{
+	// the TPM info won't change, so it's cached for future lookups
+	info = &Info{
 		FirmwareVersion: FirmwareVersion{
-			Major: info.FirmwareVersionMajor,
-			Minor: info.FirmwareVersionMinor,
+			Major: ainfo.FirmwareVersionMajor,
+			Minor: ainfo.FirmwareVersionMinor,
 		},
-		Interface:    Interface(info.Interface),
-		Manufacturer: GetManufacturerByID(manufacturer.ID(info.Manufacturer)),
-		VendorInfo:   info.VendorInfo,
-		Version:      Version(info.Version),
+		Interface:    Interface(ainfo.Interface),
+		Manufacturer: GetManufacturerByID(manufacturer.ID(ainfo.Manufacturer)),
+		VendorInfo:   ainfo.VendorInfo,
+		Version:      Version(ainfo.Version),
 	}
 
-	return result, nil
+	t.info = info
+
+	return
 }

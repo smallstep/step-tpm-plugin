@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"sync"
 
 	"github.com/google/go-attestation/attest"
@@ -25,7 +26,10 @@ type TPM struct {
 	rwc          io.ReadWriteCloser
 	lock         sync.RWMutex
 	store        storage.TPMStore
-	simulator    *simulator.Simulator
+	simulator    simulator.Simulator
+	downloader   *downloader
+	info         *Info
+	eks          []*EK
 }
 
 // NewTPMOption is used to provide options when instantiating a new
@@ -54,12 +58,32 @@ func WithStore(store storage.TPMStore) NewTPMOption {
 	}
 }
 
+// WithDisableDownload disables EK certificates from being downloaded
+// from online hosts.
+func WithDisableDownload() NewTPMOption {
+	return func(t *TPM) error {
+		t.downloader.enabled = false
+		return nil
+	}
+}
+
+// WithSimulator is used to configure a TPM simulator implementation
+// that simulates TPM operations instead of interacting with an actual
+// TPM.
+func WithSimulator(sim simulator.Simulator) NewTPMOption {
+	return func(t *TPM) error {
+		t.simulator = sim
+		return nil
+	}
+}
+
 // New creates a new TPM instance. It takes `opts` to configure
 // the instance.
 func New(opts ...NewTPMOption) (*TPM, error) {
 	tpm := &TPM{
-		attestConfig: &attest.OpenConfig{TPMVersion: attest.TPMVersion20}, // default configuration for TPM attestation use cases
-		store:        storage.BlackHole(),                                 // default storage doesn't persist anything // TODO(hs): make this in-memory storage instead?
+		attestConfig: &attest.OpenConfig{TPMVersion: attest.TPMVersion20},                      // default configuration for TPM attestation use cases
+		store:        storage.BlackHole(),                                                      // default storage doesn't persist anything // TODO(hs): make this in-memory storage instead?
+		downloader:   &downloader{enabled: true, maxDownloads: 10, client: http.DefaultClient}, // EK certificate download (if required) is enabled by default
 	}
 
 	for _, o := range opts {
@@ -74,18 +98,23 @@ func New(opts ...NewTPMOption) (*TPM, error) {
 // Open readies the TPM for usage and marks it as being
 // in use. This makes using the instance safe for
 // concurrent use.
-func (t *TPM) Open(ctx context.Context) error {
+func (t *TPM) open(ctx context.Context) (err error) {
 	// prevent opening the TPM multiple times if Open is called
 	// within the package multiple times.
 	if isInternalCall(ctx) {
-		return nil
+		return
 	}
 
 	// lock the TPM instance; it's in use now
 	t.lock.Lock()
+	defer func() {
+		if err != nil {
+			t.lock.Unlock()
+		}
+	}()
 
 	if err := t.store.Load(); err != nil { // TODO(hs): load this once? Or abstract this away.
-		return err
+		return fmt.Errorf("failed loading from TPM storage: %w", err)
 	}
 
 	// if a simulator was set, use it as the backing TPM device.
@@ -103,7 +132,7 @@ func (t *TPM) Open(ctx context.Context) error {
 		}
 		t.rwc = t.simulator
 	} else {
-		// TODO(hs): when an internal call to Open is performed, but when
+		// TODO(hs): when an internal call to open is performed, but when
 		// switching the "TPM implementation" to use between the two types,
 		// there's a possibility of a nil pointer exception. At the moment,
 		// the only "go-tpm" call is for GetRandom(), but this could change
@@ -131,11 +160,11 @@ func (t *TPM) Open(ctx context.Context) error {
 
 // Close closes the TPM instance, cleaning up resources and
 // marking it ready to be use again.
-func (t *TPM) Close(ctx context.Context) {
+func (t *TPM) close(ctx context.Context) error {
 	// prevent closing the TPM multiple times if Open is called
 	// within the package multiple times.
 	if isInternalCall(ctx) {
-		return
+		return nil
 	}
 
 	// if simulation is enabled, closing the TPM simulator must not
@@ -145,23 +174,40 @@ func (t *TPM) Close(ctx context.Context) {
 	// meaning it has to happen at the end of the test.
 	if t.simulator != nil {
 		t.lock.Unlock()
-		return
+		return nil // return early, so that simulator remains usable.
 	}
+
+	// mark the TPM as ready to be used again when returning
+	defer t.lock.Unlock()
 
 	// clean up the attest.TPM
 	if t.attestTPM != nil {
 		err := t.attestTPM.Close()
-		_ = err // TODO: handle error correctly (in defer)
 		t.attestTPM = nil
+		if err != nil {
+			return fmt.Errorf("failed closing attest.TPM: %w", err)
+		}
 	}
 
 	// clean up the go-tpm rwc
 	if t.rwc != nil {
 		err := t.rwc.Close()
-		_ = err // TODO: handle error correctly (in defer)
 		t.rwc = nil
+		if err != nil {
+			return fmt.Errorf("failed closing rwc: %w", err)
+		}
 	}
 
-	// mark the TPM as ready to be used again
-	t.lock.Unlock()
+	return nil
+}
+
+// closeTPM closes TPM `t`. It must be called as a deferred function
+// every time TPM `t` is opened. If `ep` is nil and closing the TPM
+// returned an error, `ep` will be pointed to the latter. In practice
+// this  means that errors originating from main-line logic will have
+// precedence over errors returned from closing the TPM.
+func closeTPM(ctx context.Context, t *TPM, ep *error) { //nolint:gocritic // pointer to error required to be able to point it to an error
+	if err := t.close(ctx); err != nil && *ep == nil {
+		*ep = err
+	}
 }
