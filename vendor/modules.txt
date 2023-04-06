@@ -45,7 +45,7 @@ github.com/google/go-tspi/attestation
 github.com/google/go-tspi/tspi
 github.com/google/go-tspi/tspiconst
 github.com/google/go-tspi/verification
-# github.com/inconshreveable/mousetrap v1.0.1
+# github.com/inconshreveable/mousetrap v1.1.0
 ## explicit; go 1.18
 github.com/inconshreveable/mousetrap
 # github.com/jedib0t/go-pretty v4.3.0+incompatible
@@ -81,7 +81,7 @@ github.com/russross/blackfriday/v2
 # github.com/schollz/jsonstore v1.1.0
 ## explicit
 github.com/schollz/jsonstore
-# github.com/spf13/cobra v1.6.1
+# github.com/spf13/cobra v1.7.0
 ## explicit; go 1.15
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
@@ -112,7 +112,6 @@ go.step.sm/crypto/tpm/internal/key
 go.step.sm/crypto/tpm/internal/open
 go.step.sm/crypto/tpm/manufacturer
 go.step.sm/crypto/tpm/simulator
-go.step.sm/crypto/tpm/skae
 go.step.sm/crypto/tpm/storage
 # golang.org/x/crypto v0.7.0
 ## explicit; go 1.17
