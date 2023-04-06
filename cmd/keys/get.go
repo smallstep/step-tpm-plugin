@@ -55,11 +55,10 @@ func runGetKey(ctx context.Context) error {
 		return fmt.Errorf("getting key failed: %w", err)
 	}
 
+	// TODO(hs): add option to write to file?
+	// TODO(hs): add flag to output hex?
+
 	if outputBlob {
-
-		// TODO(hs): add option to write to file?
-		// TODO(hs): add flag to output hex?
-
 		blobs, err := key.Blobs(ctx)
 		if err != nil {
 			return fmt.Errorf("failed getting key blobs: %w", err)
