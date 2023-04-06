@@ -23,7 +23,7 @@ func NewKeyCommand() *cobra.Command {
 		keys.NewDeleteKeyCommand(),
 	)
 
-	// TODO: look into making keys persistent in the TPM? How to go about deletion in that case?
+	// TODO: look into making keys persist (using EvictControl) in the TPM? How to go about deletion in that case?
 
 	return cmd
 }

@@ -23,8 +23,7 @@ func NewAKCommand() *cobra.Command {
 		ak.NewDeleteAKCommand(),
 	)
 
-	// TODO: add AK certificate command (and handle storage for that too?), ...
-	// TODO: look into making keys persistent in the TPM? How to go about deletion in that case?
+	// TODO: look into making AKs persist (using EvictControl) in the TPM? How to go about deletion in that case?
 
 	return cmd
 }

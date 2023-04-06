@@ -12,9 +12,6 @@ var rootCmd = &cobra.Command{
 	Short: "🔑 `step` plugin for interacting with TPMs. ",
 	Long: `🔑 step plugin for interacting with TPMs. 
 `,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -27,11 +24,6 @@ func Execute() {
 }
 
 func init() {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.step-tpm-plugin.yaml)")
 	rootCmd.SilenceUsage = true
 	rootCmd.AddCommand(
 		NewInfoCommand(),
@@ -39,7 +31,6 @@ func init() {
 		NewAKCommand(),
 		NewKeyCommand(),
 		NewRandomCommand(),
-		NewCSRCommand(),
 		NewVersionCommand(),
 	)
 }

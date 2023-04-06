@@ -57,6 +57,9 @@ func runGetAK(ctx context.Context) error {
 
 	if outputBlob {
 
+		// TODO(hs): add option to write to file?
+		// TODO(hs): add flag to output hex?
+
 		blobs, err := ak.Blobs(ctx)
 		if err != nil {
 			return fmt.Errorf("failed getting key blobs: %w", err)
@@ -64,33 +67,19 @@ func runGetAK(ctx context.Context) error {
 
 		switch {
 		case outputPrivate:
-
 			private, err := blobs.Private()
 			if err != nil {
 				return fmt.Errorf("failed getting private: %w", err)
 			}
-
-			// TODO: add option to write to file
 			fmt.Println(string(private))
-
-			// TODO: add flag to output hex?
-			//fmt.Println(hex.EncodeToString(private))
-
 		case outputPublic:
-
 			public, err := blobs.Public()
 			if err != nil {
 				return fmt.Errorf("failed getting public: %w", err)
 			}
-
-			// TODO: add option to write to file
 			fmt.Println(string(public))
-
-			// TODO: add flag to output hex?
-			//fmt.Println(hex.EncodeToString(public))
-
 		default:
-			return errors.New("pick --private or --public") // TODO better error
+			return errors.New("--private or --public required")
 		}
 
 		return nil
@@ -100,7 +89,7 @@ func runGetAK(ctx context.Context) error {
 		return render.JSON(os.Stdout, ak)
 	}
 
-	// TODO: instead of writing the key data, print something more meaningful
+	// TODO(hs): dumping the raw data isn't the most useful thing to do
 	fmt.Println(base64.StdEncoding.EncodeToString(ak.Data()))
 
 	return nil
