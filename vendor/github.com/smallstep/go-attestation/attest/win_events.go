@@ -24,7 +24,7 @@ import (
 	"strings"
 	"unicode/utf16"
 
-	"github.com/google/go-attestation/attest/internal"
+	"github.com/smallstep/go-attestation/attest/internal"
 )
 
 type windowsEvent uint32
@@ -678,7 +678,7 @@ func (w *WinEvents) parseUTF16(header microsoftEventHeader, r io.Reader) (string
 	return strings.TrimSuffix(string(utf16.Decode(data)), "\x00"), nil
 }
 
-func (w *WinEvents) readELAMAggregation(rdr *bytes.Reader, header microsoftEventHeader) error {
+func (w *WinEvents) readELAMAggregation(rdr io.Reader, header microsoftEventHeader) error {
 	var (
 		r          = &io.LimitedReader{R: rdr, N: int64(header.Size)}
 		driverName string
@@ -698,6 +698,11 @@ func (w *WinEvents) readELAMAggregation(rdr *bytes.Reader, header microsoftEvent
 
 		var err error
 		switch h.Type {
+		case elamAggregation:
+			w.readELAMAggregation(r, h)
+			if r.N == 0 {
+				return nil
+			}
 		case elamKeyname:
 			if driverName != "" {
 				return errors.New("duplicate driver name in ELAM aggregation event")
