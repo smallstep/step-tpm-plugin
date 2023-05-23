@@ -14,6 +14,7 @@ const (
 	FlagStorageDirectory = "storage-directory"
 	FlagJSON             = "json"
 	FlagPEM              = "pem"
+	FlagBundle           = "bundle"
 	FlagAK               = "ak"
 	FlagBlob             = "blob"
 	FlagPrivate          = "private"
@@ -152,6 +153,14 @@ func PEM() Bool {
 	}
 }
 
+// Bundle returns a "bundle" bool flag
+func Bundle() Bool {
+	return Bool{
+		Name:        FlagBundle,
+		Description: "Output certificate chain bundle",
+	}
+}
+
 // AK returns an "ak" string flag.
 func AK() String {
 	return String{
@@ -160,6 +169,7 @@ func AK() String {
 	}
 }
 
+// Blob returns a "blob" bool flag
 func Blob() Bool {
 	return Bool{
 		Name:        FlagBlob,
@@ -167,6 +177,7 @@ func Blob() Bool {
 	}
 }
 
+// Private returns a "private" bool flag
 func Private() Bool {
 	return Bool{
 		Name:        FlagPrivate,
@@ -174,6 +185,7 @@ func Private() Bool {
 	}
 }
 
+// Public returns a "public" bool flag
 func Public() Bool {
 	return Bool{
 		Name:        FlagPublic,
