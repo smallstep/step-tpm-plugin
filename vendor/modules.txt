@@ -5,8 +5,8 @@ filippo.io/edwards25519/field
 # github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef
 ## explicit; go 1.13
 github.com/asaskevich/govalidator
-# github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
-## explicit
+# github.com/chzyer/readline v1.5.1
+## explicit; go 1.15
 github.com/chzyer/readline
 # github.com/cpuguy83/go-md2man/v2 v2.0.2
 ## explicit; go 1.11
@@ -26,12 +26,6 @@ github.com/google/certificate-transparency-go/asn1
 github.com/google/certificate-transparency-go/tls
 github.com/google/certificate-transparency-go/x509
 github.com/google/certificate-transparency-go/x509/pkix
-# github.com/google/go-attestation v0.4.4-0.20220404204839-8820d49b18d9 => github.com/smallstep/go-attestation v0.4.4-0.20230224121042-1bcb20a75add
-## explicit; go 1.16
-github.com/google/go-attestation/attest
-github.com/google/go-attestation/attest/internal
-github.com/google/go-attestation/oid
-github.com/google/go-attestation/x509
 # github.com/google/go-tpm v0.3.3
 ## explicit; go 1.12
 github.com/google/go-tpm/tpm
@@ -39,7 +33,7 @@ github.com/google/go-tpm/tpm2
 github.com/google/go-tpm/tpm2/credactivation
 github.com/google/go-tpm/tpmutil
 github.com/google/go-tpm/tpmutil/tbs
-# github.com/google/go-tpm-tools v0.3.10
+# github.com/google/go-tpm-tools v0.3.11
 ## explicit; go 1.19
 github.com/google/go-tpm-tools/simulator
 github.com/google/go-tpm-tools/simulator/internal
@@ -85,13 +79,19 @@ github.com/russross/blackfriday/v2
 # github.com/schollz/jsonstore v1.1.0
 ## explicit
 github.com/schollz/jsonstore
+# github.com/smallstep/go-attestation v0.4.4-0.20230509120429-e17291421738
+## explicit; go 1.16
+github.com/smallstep/go-attestation/attest
+github.com/smallstep/go-attestation/attest/internal
+github.com/smallstep/go-attestation/oid
+github.com/smallstep/go-attestation/x509
 # github.com/spf13/cobra v1.7.0
 ## explicit; go 1.15
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
 ## explicit; go 1.12
 github.com/spf13/pflag
-# github.com/urfave/cli v1.22.7
+# github.com/urfave/cli v1.22.12
 ## explicit; go 1.11
 github.com/urfave/cli
 # go.mongodb.org/mongo-driver v1.11.1
@@ -103,12 +103,12 @@ go.mongodb.org/mongo-driver/bson/bsonrw
 go.mongodb.org/mongo-driver/bson/bsontype
 go.mongodb.org/mongo-driver/bson/primitive
 go.mongodb.org/mongo-driver/x/bsonx/bsoncore
-# go.step.sm/cli-utils v0.7.5
-## explicit; go 1.16
+# go.step.sm/cli-utils v0.7.6
+## explicit; go 1.18
 go.step.sm/cli-utils/errs
 go.step.sm/cli-utils/step
 go.step.sm/cli-utils/ui
-# go.step.sm/crypto v0.29.0
+# go.step.sm/crypto v0.30.0
 ## explicit; go 1.18
 go.step.sm/crypto/fingerprint
 go.step.sm/crypto/internal/bcrypt_pbkdf
@@ -124,7 +124,7 @@ go.step.sm/crypto/tpm/manufacturer
 go.step.sm/crypto/tpm/simulator
 go.step.sm/crypto/tpm/storage
 go.step.sm/crypto/x25519
-# golang.org/x/crypto v0.7.0
+# golang.org/x/crypto v0.8.0
 ## explicit; go 1.17
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/chacha20
@@ -141,7 +141,7 @@ golang.org/x/crypto/salsa20/salsa
 golang.org/x/crypto/scrypt
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
-# golang.org/x/sys v0.6.0
+# golang.org/x/sys v0.7.0
 ## explicit; go 1.17
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
