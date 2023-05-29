@@ -33,7 +33,7 @@ github.com/google/go-tpm/tpm2
 github.com/google/go-tpm/tpm2/credactivation
 github.com/google/go-tpm/tpmutil
 github.com/google/go-tpm/tpmutil/tbs
-# github.com/google/go-tpm-tools v0.3.11
+# github.com/google/go-tpm-tools v0.3.12
 ## explicit; go 1.19
 github.com/google/go-tpm-tools/simulator
 github.com/google/go-tpm-tools/simulator/internal
@@ -108,7 +108,7 @@ go.mongodb.org/mongo-driver/x/bsonx/bsoncore
 go.step.sm/cli-utils/errs
 go.step.sm/cli-utils/step
 go.step.sm/cli-utils/ui
-# go.step.sm/crypto v0.30.0
+# go.step.sm/crypto v0.31.0
 ## explicit; go 1.18
 go.step.sm/crypto/fingerprint
 go.step.sm/crypto/internal/bcrypt_pbkdf
@@ -124,7 +124,7 @@ go.step.sm/crypto/tpm/manufacturer
 go.step.sm/crypto/tpm/simulator
 go.step.sm/crypto/tpm/storage
 go.step.sm/crypto/x25519
-# golang.org/x/crypto v0.8.0
+# golang.org/x/crypto v0.9.0
 ## explicit; go 1.17
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/chacha20
@@ -141,7 +141,7 @@ golang.org/x/crypto/salsa20/salsa
 golang.org/x/crypto/scrypt
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
-# golang.org/x/sys v0.7.0
+# golang.org/x/sys v0.8.0
 ## explicit; go 1.17
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
