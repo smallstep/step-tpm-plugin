@@ -7,7 +7,7 @@ require (
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
 	go.step.sm/cli-utils v0.7.6
-	go.step.sm/crypto v0.31.0
+	go.step.sm/crypto v0.31.2
 )
 
 require (
