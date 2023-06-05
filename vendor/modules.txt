@@ -108,7 +108,7 @@ go.mongodb.org/mongo-driver/x/bsonx/bsoncore
 go.step.sm/cli-utils/errs
 go.step.sm/cli-utils/step
 go.step.sm/cli-utils/ui
-# go.step.sm/crypto v0.31.0
+# go.step.sm/crypto v0.31.2
 ## explicit; go 1.18
 go.step.sm/crypto/fingerprint
 go.step.sm/crypto/internal/bcrypt_pbkdf
