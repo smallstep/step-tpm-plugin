@@ -40,7 +40,9 @@ type NewTPMOption func(t *TPM) error
 // device.
 func WithDeviceName(name string) NewTPMOption {
 	return func(t *TPM) error {
-		t.deviceName = name
+		if name != "" {
+			t.deviceName = name
+		}
 		return nil
 	}
 }
@@ -199,6 +201,14 @@ func (t *TPM) close(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+type validatableConfig interface {
+	Validate() error
+}
+
+func (t *TPM) validate(config validatableConfig) error {
+	return config.Validate()
 }
 
 // closeTPM closes TPM `t`. It must be called as a deferred function

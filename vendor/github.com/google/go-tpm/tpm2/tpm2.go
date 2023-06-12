@@ -532,6 +532,8 @@ func create(rw io.ReadWriter, parentHandle tpmutil.Handle, auth AuthCommand, obj
 	if err != nil {
 		return nil, nil, nil, nil, Ticket{}, err
 	}
+	fmt.Println(cmd)
+	//fmt.Println(string(cmd))
 	resp, err := runCommand(rw, TagSessions, CmdCreate, tpmutil.RawBytes(cmd))
 	if err != nil {
 		return nil, nil, nil, nil, Ticket{}, err
