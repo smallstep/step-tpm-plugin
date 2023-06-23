@@ -19,6 +19,9 @@ const (
 	FlagBlob             = "blob"
 	FlagPrivate          = "private"
 	FlagPublic           = "public"
+	FlagSocket           = "socket"
+	FlagSeed             = "seed"
+	FlagVerbose          = "verbose"
 )
 
 // Flag wraps the set of flags.
@@ -190,5 +193,29 @@ func Public() Bool {
 	return Bool{
 		Name:        FlagPublic,
 		Description: "Print public blob",
+	}
+}
+
+// Socket returns a "socket" string flag.
+func Socket() String {
+	return String{
+		Name:        FlagSocket,
+		Description: "Path to UNIX socket to serve TPM simulator on",
+	}
+}
+
+// Seed returns a "seed" string flag
+func Seed() String {
+	return String{
+		Name:        FlagSeed,
+		Description: "Seed value for TPM simulator",
+	}
+}
+
+// Verbose returns a "verbose" bool flag
+func Verbose() Bool {
+	return Bool{
+		Name:        FlagVerbose,
+		Description: "Enable verbose logging",
 	}
 }

@@ -31,6 +31,7 @@ func init() {
 		NewAKCommand(),
 		NewKeyCommand(),
 		NewRandomCommand(),
+		NewSimulatorCommand(),
 		NewVersionCommand(),
 	)
 }
