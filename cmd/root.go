@@ -1,9 +1,12 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
+
+	"go.step.sm/cli-utils/step"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -17,6 +20,12 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
+	// initialize step environment.
+	if err := step.Init(); err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(1)
+	}
+
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)

@@ -59,7 +59,11 @@ build:
 	$Q go build -v -o $(PREFIX)bin/$(BINNAME) $(LDFLAGS) $(PKG)
 	@echo "Build Complete!"
 
-.PHONY: build
+build-dev:
+	$Q go build -v -tags tpmsimulator -o $(PREFIX)bin/$(BINNAME) $(LDFLAGS) $(PKG)
+	@echo "Build Complete!"
+
+.PHONY: build build-dev
 
 #########################################
 # Go generate
