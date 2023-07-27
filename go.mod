@@ -6,8 +6,8 @@ require (
 	github.com/jedib0t/go-pretty v4.3.0+incompatible
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
-	go.step.sm/cli-utils v0.7.6
-	go.step.sm/crypto v0.32.4
+	go.step.sm/cli-utils v0.8.0
+	go.step.sm/crypto v0.33.0
 )
 
 require (
@@ -33,7 +33,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/schollz/jsonstore v1.1.0 // indirect
 	github.com/smallstep/go-attestation v0.4.4-0.20230509120429-e17291421738 // indirect
-	github.com/urfave/cli v1.22.12 // indirect
+	github.com/urfave/cli v1.22.14 // indirect
 	go.mongodb.org/mongo-driver v1.11.1 // indirect
 	golang.org/x/crypto v0.11.0 // indirect
 	golang.org/x/sys v0.10.0 // indirect
