@@ -8,6 +8,6 @@ import (
 	"errors"
 )
 
-func runSimulator(ctx context.Context) error {
+func runSimulator(context.Context) error {
 	return errors.New(`simulator is only available when built with the "tpmsimulator" tag`)
 }

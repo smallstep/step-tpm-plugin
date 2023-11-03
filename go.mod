@@ -1,13 +1,13 @@
 module github.com/smallstep/step-tpm-plugin
 
-go 1.19
+go 1.20
 
 require (
 	github.com/jedib0t/go-pretty v4.3.0+incompatible
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
 	go.step.sm/cli-utils v0.8.0
-	go.step.sm/crypto v0.36.1
+	go.step.sm/crypto v0.36.2-0.20231103233053-5e540c79d4cf
 )
 
 require (
@@ -20,7 +20,7 @@ require (
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/certificate-transparency-go v1.1.4 // indirect
 	github.com/google/go-tpm v0.9.0 // indirect
-	github.com/google/go-tpm-tools v0.4.1 // indirect
+	github.com/google/go-tpm-tools v0.4.2 // indirect
 	github.com/google/go-tspi v0.3.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/manifoldco/promptui v0.9.0 // indirect
