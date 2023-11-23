@@ -1,6 +1,7 @@
 package flag
 
 import (
+	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
@@ -19,6 +20,7 @@ const (
 	FlagBlob             = "blob"
 	FlagPrivate          = "private"
 	FlagPublic           = "public"
+	FlagTSS2             = "tss2"
 	FlagSocket           = "socket"
 	FlagSeed             = "seed"
 	FlagVerbose          = "verbose"
@@ -126,6 +128,7 @@ func Device() String {
 		Name:        FlagDeviceName,
 		Shorthand:   "d",
 		Description: "TPM device name",
+		Default:     os.Getenv("STEP_TPM_DEVICE"),
 	}
 }
 
@@ -193,6 +196,14 @@ func Public() Bool {
 	return Bool{
 		Name:        FlagPublic,
 		Description: "Print public blob",
+	}
+}
+
+// TSS2 returns a "tts2" bool flag
+func TSS2() Bool {
+	return Bool{
+		Name:        FlagTSS2,
+		Description: "Print the public and private blobs using the TSS2 format",
 	}
 }
 

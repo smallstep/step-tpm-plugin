@@ -39,6 +39,7 @@ func NewGetKeyCommand() *cobra.Command {
 		flag.Blob(),
 		flag.Private(),
 		flag.Public(),
+		flag.TSS2(),
 	)
 
 	return cmd
@@ -54,6 +55,7 @@ func runGetKey(ctx context.Context) error {
 		outputBlob    = flag.GetBool(ctx, flag.FlagBlob)
 		outputPrivate = flag.GetBool(ctx, flag.FlagPrivate)
 		outputPublic  = flag.GetBool(ctx, flag.FlagPublic)
+		outputTSS2    = flag.GetBool(ctx, flag.FlagTSS2)
 	)
 
 	key, err := t.GetKey(ctx, name)
@@ -63,7 +65,7 @@ func runGetKey(ctx context.Context) error {
 
 	// TODO(hs): add option to write to file?
 	// TODO(hs): add flag to output hex?
-	if outputPEM {
+	if outputPEM && !outputTSS2 {
 		chain := key.CertificateChain()
 		if len(chain) == 0 {
 			fmt.Println("no certificate available")
@@ -86,6 +88,20 @@ func runGetKey(ctx context.Context) error {
 		}
 		_, err = fmt.Println(string(pem.EncodeToMemory(b)))
 		return err
+	}
+
+	if outputTSS2 {
+		tpmKey, err := key.ToTSS2(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get the TPMKey: %w", err)
+		}
+		b, err := tpmKey.EncodeToMemory()
+		if err != nil {
+			return fmt.Errorf("failed to encode the TPMKey: %w", err)
+		}
+
+		fmt.Println(string(b))
+		return nil
 	}
 
 	if outputBlob {
@@ -113,6 +129,7 @@ func runGetKey(ctx context.Context) error {
 
 		return nil
 	}
+
 	if json {
 		return render.JSON(os.Stdout, key)
 	}

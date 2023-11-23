@@ -1,6 +1,6 @@
 module github.com/smallstep/step-tpm-plugin
 
-go 1.19
+go 1.20
 
 require (
 	github.com/jedib0t/go-pretty v4.3.0+incompatible
