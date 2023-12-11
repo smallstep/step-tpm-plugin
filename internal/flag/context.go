@@ -37,29 +37,32 @@ func FirstArg(ctx context.Context) string {
 // GetBool returns the value of the named boolean flag ctx carries. It panics
 // in case ctx carries no flags or in case the named flag isn't a boolean one.
 func GetBool(ctx context.Context, name string) bool {
-	if v, err := FromContext(ctx).GetBool(name); err != nil {
+	v, err := FromContext(ctx).GetBool(name)
+	if err != nil {
 		panic(err)
-	} else {
-		return v
 	}
+
+	return v
 }
 
 // GetString returns the value of the named string flag ctx carries. It panics
 // in case ctx carries no flags or in case the named flag isn't a string one.
 func GetString(ctx context.Context, name string) string {
-	if v, err := FromContext(ctx).GetString(name); err != nil {
+	v, err := FromContext(ctx).GetString(name)
+	if err != nil {
 		panic(err)
-	} else {
-		return v
 	}
+
+	return v
 }
 
 // GetInt returns the value of the named int flag ctx carries. It panics
 // in case ctx carries no flags or in case the named flag isn't an int one.
 func GetInt(ctx context.Context, name string) int {
-	if v, err := FromContext(ctx).GetInt(name); err != nil {
+	v, err := FromContext(ctx).GetInt(name)
+	if err != nil {
 		panic(err)
-	} else {
-		return v
 	}
+
+	return v
 }
