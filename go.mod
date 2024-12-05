@@ -1,13 +1,15 @@
 module github.com/smallstep/step-tpm-plugin
 
-go 1.20
+go 1.22
+
+toolchain go1.23.2
 
 require (
 	github.com/jedib0t/go-pretty v4.3.0+incompatible
+	github.com/smallstep/cli-utils v0.10.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
-	go.step.sm/cli-utils v0.9.0
-	go.step.sm/crypto v0.51.2
+	go.step.sm/crypto v0.55.0
 )
 
 require (
@@ -33,8 +35,8 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/schollz/jsonstore v1.1.0 // indirect
 	github.com/smallstep/go-attestation v0.4.4-0.20240109183208-413678f90935 // indirect
-	github.com/urfave/cli v1.22.14 // indirect
+	github.com/urfave/cli v1.22.15 // indirect
 	go.mongodb.org/mongo-driver v1.11.1 // indirect
-	golang.org/x/crypto v0.26.0 // indirect
-	golang.org/x/sys v0.24.0 // indirect
+	golang.org/x/crypto v0.29.0 // indirect
+	golang.org/x/sys v0.27.0 // indirect
 )

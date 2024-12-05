@@ -14,11 +14,12 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"github.com/jedib0t/go-pretty/table"
+
 	"go.step.sm/crypto/randutil"
 	"go.step.sm/crypto/tpm"
 	"go.step.sm/crypto/tpm/simulator"
 
-	"github.com/jedib0t/go-pretty/table"
 	"github.com/smallstep/step-tpm-plugin/internal/flag"
 )
 
