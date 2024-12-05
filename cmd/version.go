@@ -18,7 +18,7 @@ func NewVersionCommand() *cobra.Command {
 		Use:   "version",
 		Short: "print the version information",
 		Long:  `Print the version information.`,
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(cmd *cobra.Command, _ []string) {
 			if Version == "" {
 				Version = "0000000-dev"
 			}
