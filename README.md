@@ -80,6 +80,18 @@ In that case you have to adapt the command used to compile the plugin to somethi
 C_INCLUDE_PATH="/path/to/openssl@1.1/1.1.1v/include/" LIBRARY_PATH="/path/to/openssl@1.1/1.1.1v/lib/" go build -o step-tpm-plugin -tags tpmsimulator .
 ```
 
+#### MacOS
+
+On macOS it's possible to use `brew` to install OpenSSL, and to specify `CGO_CFLAGS` and `CGO_LDFLAGS` for compilation as follows:
+
+```console
+brew install openssl
+export CGO_CFLAGS="-I$(brew --prefix openssl)/include"
+export CGO_LDFLAGS="-L$(brew --prefix openssl)/lib"
+```
+
+See [go-tpm-tools](https://github.com/google/go-tpm-tools?tab=readme-ov-file#openssl-errors-when-building-simulator) for additional troubleshooting.
+
 ## TODO
 
 Incomplete lists of things still to do:
