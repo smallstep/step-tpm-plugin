@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"go.step.sm/cli-utils/step"
+	"github.com/smallstep/cli-utils/step"
 )
 
 const (
