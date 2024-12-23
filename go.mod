@@ -9,7 +9,7 @@ require (
 	github.com/smallstep/cli-utils v0.10.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
-	go.step.sm/crypto v0.55.0
+	go.step.sm/crypto v0.56.0
 )
 
 require (
@@ -21,7 +21,7 @@ require (
 	github.com/go-openapi/strfmt v0.21.3 // indirect
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/certificate-transparency-go v1.1.4 // indirect
-	github.com/google/go-tpm v0.9.1 // indirect
+	github.com/google/go-tpm v0.9.2 // indirect
 	github.com/google/go-tpm-tools v0.4.4 // indirect
 	github.com/google/go-tspi v0.3.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -37,6 +37,6 @@ require (
 	github.com/smallstep/go-attestation v0.4.4-0.20240109183208-413678f90935 // indirect
 	github.com/urfave/cli v1.22.15 // indirect
 	go.mongodb.org/mongo-driver v1.11.1 // indirect
-	golang.org/x/crypto v0.29.0 // indirect
-	golang.org/x/sys v0.27.0 // indirect
+	golang.org/x/crypto v0.31.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
 )
