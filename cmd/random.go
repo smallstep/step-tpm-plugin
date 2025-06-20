@@ -19,7 +19,7 @@ func NewRandomCommand() *cobra.Command {
 	const (
 		long = `subcommand for generating random data.
 `
-		short = "subcommand for for generating random data"
+		short = "subcommand for generating random data"
 	)
 
 	cmd := command.New("random <command>", short, long, runRandom, []command.Preparer{command.RequireTPMWithoutStorage}, nil)

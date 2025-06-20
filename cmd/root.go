@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 
+	"github.com/charmbracelet/fang"
 	"github.com/spf13/cobra"
 
 	"github.com/smallstep/cli-utils/step"
@@ -12,28 +14,14 @@ import (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "step-tpm-plugin",
-	Short: "🔑 `step` plugin for interacting with TPMs. ",
-	Long: `🔑 step plugin for interacting with TPMs. 
-`,
+	Short: "🔑 `step` plugin for interacting with TPMs.",
+	Long:  `🔑 step plugin for interacting with TPMs.`,
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
+// Execute adds all child commands to the root command and prepares the step
+// environment. It then invokes the root command in style with fangs.
 func Execute() {
-	// initialize step environment.
-	if err := step.Init(); err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		os.Exit(1)
-	}
-
-	err := rootCmd.Execute()
-	if err != nil {
-		os.Exit(1)
-	}
-}
-
-func init() {
-	rootCmd.SilenceUsage = true
+	// add all child commands
 	rootCmd.AddCommand(
 		NewInfoCommand(),
 		NewEKCommand(),
@@ -43,4 +31,17 @@ func init() {
 		NewSimulatorCommand(),
 		NewVersionCommand(),
 	)
+
+	// ensure step environment is prepared before every command
+	rootCmd.PersistentPreRunE = func(*cobra.Command, []string) error {
+		if err := step.Init(); err != nil {
+			return fmt.Errorf("failed initializing step environment: %w", err)
+		}
+		return nil
+	}
+
+	// execute the command
+	if err := fang.Execute(context.Background(), rootCmd); err != nil {
+		os.Exit(1)
+	}
 }

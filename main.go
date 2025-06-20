@@ -1,6 +1,8 @@
 package main
 
-import "github.com/smallstep/step-tpm-plugin/cmd"
+import (
+	"github.com/smallstep/step-tpm-plugin/cmd"
+)
 
 func main() {
 	cmd.Execute()
