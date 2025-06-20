@@ -14,7 +14,9 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/jedib0t/go-pretty/table"
+	"github.com/charmbracelet/colorprofile"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/table"
 
 	"github.com/smallstep/panoramix/v5/logware"
 	"go.step.sm/crypto/randutil"
@@ -99,29 +101,9 @@ func runSimulator(ctx context.Context) (err error) {
 		}
 	}()
 
-	t1 := table.NewWriter()
-	t1.SetOutputMirror(os.Stdout)
-	t1.AppendRows([]table.Row{
-		{"Version", info.Version},
-		{"Interface", fmt.Sprintf("%s (simulator)", info.Interface)},
-		{"Manufacturer", info.Manufacturer},
-		{"Vendor Info", info.VendorInfo},
-		{"Firmware Version", info.FirmwareVersion},
-	})
-	for _, ek := range eks {
-		u, err := ek.FingerprintURI()
-		if err != nil {
-			return err
-		}
-		t1.AppendRow(table.Row{
-			fmt.Sprintf("EK URI (%s)", ek.Type()), u.String(),
-		})
+	if err := printTPMInfo(info, eks, socket, seed); err != nil {
+		logger.ErrorContext(ctx, "failed printing TPM info", logware.Error(err))
 	}
-	t1.AppendRows([]table.Row{
-		{"UNIX socket", socket},
-		{"Seed", seed},
-	})
-	t1.Render()
 
 	logger.InfoContext(ctx, "TPM simulator available", slog.String("socket", socket))
 
@@ -186,6 +168,52 @@ func runSimulator(ctx context.Context) (err error) {
 			// TODO(hs): log at least something about the interaction? The simulator is now very quiet after starting
 		}(conn)
 	}
+}
+
+var (
+	purple       = lipgloss.Color("99")
+	gray         = lipgloss.Color("245")
+	lightGray    = lipgloss.Color("241")
+	headerStyle  = lipgloss.NewStyle().Foreground(purple).Bold(true).Align(lipgloss.Center)
+	cellStyle    = lipgloss.NewStyle().Padding(0, 1).MaxWidth(80)
+	oddRowStyle  = cellStyle.Foreground(gray)
+	evenRowStyle = cellStyle.Foreground(lightGray)
+)
+
+func printTPMInfo(info *tpm.Info, eks []*tpm.EK, socket, seed string) error {
+	tbl := table.New().
+		Border(lipgloss.NormalBorder()).
+		BorderStyle(lipgloss.NewStyle().Foreground(purple)).
+		StyleFunc(func(row, col int) lipgloss.Style {
+			switch {
+			case row == table.HeaderRow:
+				return headerStyle
+			case row%2 == 0:
+				return evenRowStyle
+			default:
+				return oddRowStyle
+			}
+		})
+
+	tbl.Row("Version", info.Version.String())
+	tbl.Row("Interface", fmt.Sprintf("%s (simulator)", info.Interface))
+	tbl.Row("Manufacturer", info.Manufacturer.String())
+	tbl.Row("Vendor Info", info.VendorInfo)
+	tbl.Row("Firmware Version", info.FirmwareVersion.String())
+	for _, ek := range eks {
+		u, err := ek.FingerprintURI()
+		if err != nil {
+			return err
+		}
+		tbl.Row(fmt.Sprintf("EK URI (%s)", ek.Type()), u.String())
+	}
+	tbl.Row("UNIX socket", socket)
+	tbl.Row("Seed", seed)
+
+	w := colorprofile.NewWriter(os.Stdout, os.Environ())
+	fmt.Fprintln(w, tbl)
+
+	return nil
 }
 
 func getTPMSimulatorSocketPath() (sockAddr string, err error) {

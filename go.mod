@@ -7,6 +7,7 @@ toolchain go1.24.1
 require (
 	github.com/charmbracelet/colorprofile v0.3.0
 	github.com/charmbracelet/fang v0.1.0
+	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/jedib0t/go-pretty v4.3.0+incompatible
 	github.com/smallstep/cli-utils v0.12.2
 	github.com/smallstep/panoramix/v5 v5.0.0-beta1
@@ -18,6 +19,7 @@ require (
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef // indirect
+	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/lipgloss/v2 v2.0.0-beta.1 // indirect
 	github.com/charmbracelet/x/ansi v0.8.0 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.13 // indirect
@@ -47,6 +49,7 @@ require (
 	github.com/muesli/mango-cobra v1.2.0 // indirect
 	github.com/muesli/mango-pflag v0.1.0 // indirect
 	github.com/muesli/roff v0.1.0 // indirect
+	github.com/muesli/termenv v0.16.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/peterbourgon/diskv/v3 v3.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
