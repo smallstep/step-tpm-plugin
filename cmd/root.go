@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/charmbracelet/colorprofile"
 	"github.com/charmbracelet/fang"
 	"github.com/spf13/cobra"
 
@@ -33,10 +34,14 @@ func Execute() {
 	)
 
 	// ensure step environment is prepared before every command
-	rootCmd.PersistentPreRunE = func(*cobra.Command, []string) error {
+	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, _ []string) error {
 		if err := step.Init(); err != nil {
 			return fmt.Errorf("failed initializing step environment: %w", err)
 		}
+
+		cmd.SetOut(colorprofile.NewWriter(cmd.OutOrStdout(), os.Environ()))
+		cmd.SetErr(colorprofile.NewWriter(cmd.ErrOrStderr(), os.Environ()))
+
 		return nil
 	}
 
