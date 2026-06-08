@@ -1,13 +1,13 @@
 module github.com/smallstep/step-tpm-plugin
 
-go 1.25.1
+go 1.25.8
 
 require (
 	github.com/jedib0t/go-pretty v4.3.0+incompatible
 	github.com/smallstep/cli-utils v0.12.2
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
-	go.step.sm/crypto v0.81.1
+	go.step.sm/crypto v0.82.0
 )
 
 require (
