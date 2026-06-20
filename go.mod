@@ -34,7 +34,7 @@ require (
 	github.com/schollz/jsonstore v1.1.0 // indirect
 	github.com/smallstep/go-attestation v0.4.9 // indirect
 	github.com/urfave/cli v1.22.17 // indirect
-	go.mongodb.org/mongo-driver v1.11.1 // indirect
+	go.mongodb.org/mongo-driver v1.17.7 // indirect
 	golang.org/x/crypto v0.52.0 // indirect
 	golang.org/x/sys v0.45.0 // indirect
 )
