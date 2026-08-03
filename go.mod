@@ -7,7 +7,7 @@ require (
 	github.com/smallstep/cli-utils v0.12.2
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
-	go.step.sm/crypto v0.85.0
+	go.step.sm/crypto v0.87.0
 )
 
 require (
@@ -35,6 +35,6 @@ require (
 	github.com/smallstep/go-attestation v0.4.9 // indirect
 	github.com/urfave/cli v1.22.17 // indirect
 	go.mongodb.org/mongo-driver v1.17.7 // indirect
-	golang.org/x/crypto v0.53.0 // indirect
-	golang.org/x/sys v0.46.0 // indirect
+	golang.org/x/crypto v0.54.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
 )
